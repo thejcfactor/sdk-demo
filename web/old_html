@@ -1,0 +1,180 @@
+<div class="tabs d-flex flex-row">
+    <button
+        class="tab"
+        v-bind:class="{
+        'active-tab': selectedTab == 'CONNECT'
+        }"
+        @click="onTabClick('CONNECT')"
+    >
+        1. Connect
+    </button>
+    <button
+        class="tab"
+        v-bind:class="{
+        'active-tab': selectedTab == 'PLAY'
+        }"
+        @click="onTabClick('PLAY')"
+    >
+        2. Play
+    </button>
+    <div class="empty-tab"></div>
+</div>
+
+/* tab styling */
+
+.tabs {
+  width: 100%;
+  overflow: hidden;
+  /*border-bottom: 1px solid #ccc;*/
+  background-color: #fff;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  padding-bottom: 15px;
+}
+
+/* Style the buttons that are used to open the tab content */
+.tabs button.tab {
+  background-color: #ddd;
+  border: 1px #000;
+  border-style: none none solid none;
+  display: inline;
+  position: relative;
+  max-height: 40px;
+  min-width: 150px;
+  line-height: 40px;
+  /*float: left;*/
+  /*border: none;*/
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  transition: 0.3s;
+}
+
+.empty-tab {
+  width: 100%;
+  max-height: 40px;
+  background-color: #ddd;
+  border-bottom: 1px solid #000;
+}
+
+/* Change background color of buttons on hover */
+.tabs button.tab:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+button.tab.active-tab {
+  background-color: #ccc;
+}
+
+button.tab.active-tab:after {
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 15px solid #000;
+  content: "";
+  position: absolute;
+  bottom: -15px;
+  left: 5%;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+
+<b-col lg="6" md="7">
+  <div class="code-portion-window">
+    <!--<div class="code-portion-wrapper">-->
+    <img
+      class="code-portion-img-1"
+      src="@/assets/images/server_nodeJs.png"
+    />
+    <!--</div>-->
+  </div>
+</b-col>
+<b-col cols="3">
+  <div class="code-window float-right">
+    <b-popover target="link-1" triggers="hover" placement="right">
+      Connection
+    </b-popover>
+    <div class="code-img-wrapper">
+      <img
+        class="code-img"
+        src="@/assets/images/server_nodeJs.png"
+      />
+      <a id="link-1" href="#"><div class="code-link-1"></div></a>
+      <a id="link-2" href="#"><div class="code-link-2"></div></a>
+    </div>
+  </div>
+</b-col>
+
+/* Connection info styles */
+
+.code-portion-window {
+  margin-top: 10px;
+  max-width: 800px;
+  max-height: 380px;
+  overflow: hidden;
+}
+
+.code-portion-img {
+  object-fit: none;
+  object-position: 0% 1.75%;
+  width: 100%;
+  height: 380px;
+  /*margin: -300px 0 0 -400px;
+  transform: scale(0.8,0.8);
+  overflow: hidden;*/
+}
+
+.code-portion-img-2 {
+  object-fit: none;
+  object-position: 0% 23.2%;
+  width: 100%;
+  height: 380px;
+  /*margin: -300px 0 0 -400px;
+  transform: scale(0.8,0.8);
+  overflow: hidden;*/
+}
+
+.code-window {
+  margin-top: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.code-img-wrapper {
+  position: relative;
+  max-width: 300px;
+  max-height: 1000px;
+}
+
+.code-img {
+  width: 100%;
+  height: auto;
+}
+
+/* stackoverflow.com/questions/7844399/responsive-image-map */
+.code-link-1 {
+  position: absolute;
+  left: 0%;
+  top: 5%;
+  width: 100%;
+  height: 15%;
+  background-color: rgb(255, 255, 255, 0.25);
+}
+
+.code-link-2 {
+  position: absolute;
+  left: 0%;
+  top: 66%;
+  width: 100%;
+  height: 15%;
+  background-color: rgb(255, 255, 255, 0.25);
+}

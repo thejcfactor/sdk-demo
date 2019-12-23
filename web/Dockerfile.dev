@@ -1,0 +1,25 @@
+FROM node:alpine
+
+WORKDIR /app
+
+COPY ./package.json ./
+
+RUN npm install
+RUN npm install -g @vue/cli
+
+ARG VUE_APP_CB_HOST=localhost
+ARG VUE_APP_CB_USERNAME=Administrator
+ARG VUE_APP_CB_PW=password
+ARG VUE_APP_CB_BUCKET=beer-sample
+ARG VUE_APP_API_URL=http://localhost:80
+
+#when changing to npm run build, this allows the ENV to be set at build time
+ENV VUE_APP_CB_HOST $VUE_APP_CB_HOST
+ENV VUE_APP_CB_USERNAME $VUE_APP_CB_USERNAME
+ENV VUE_APP_CB_PW $VUE_APP_CB_PW
+ENV VUE_APP_CB_BUCKET $VUE_APP_CB_BUCKET
+ENV VUE_APP_API_URL $VUE_APP_API_URL
+
+COPY . .
+
+CMD ["npm", "run", "serve"]
