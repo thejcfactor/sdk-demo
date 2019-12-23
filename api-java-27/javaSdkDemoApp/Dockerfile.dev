@@ -1,0 +1,27 @@
+FROM maven:3.6.2-jdk-8 AS build
+
+#setting ENV variables used in configuration script
+#use host.docker.internal for local testing on a mac
+ARG CB_HOST=host.docker.internal
+ARG CB_USERNAME=Administrator
+ARG CB_PW=password
+ARG CB_BUCKET=beer-sample
+
+COPY src /usr/src/app/src
+COPY pom.xml /usr/src/app
+RUN mvn -f /usr/src/app/pom.xml clean package
+
+FROM openjdk:8-jdk
+
+ENV CB_HOST host.docker.internal
+ENV CB_PORT 8091
+ENV CB_USERNAME Administrator
+ENV CB_PW password
+ENV CB_BUCKET beer-sample
+ENV OS_PARENT_MAC true
+
+RUN apt-get update
+
+COPY --from=build /usr/src/app/target/javaSdkDemoApp-1.0-SNAPSHOT.jar /usr/app/javaSdkDemoApp-1.0-SNAPSHOT.jar
+
+ENTRYPOINT ["java", "-jar", "/usr/app/javaSdkDemoApp-1.0-SNAPSHOT.jar"]

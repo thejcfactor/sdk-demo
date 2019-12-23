@@ -1,0 +1,16 @@
+#use an existing docker image as base
+FROM couchbase:latest
+
+COPY configure-node.sh /opt/couchbase
+
+RUN chmod +x /opt/couchbase/configure-node.sh
+
+#setting ENV variables used in configuration script
+ENV CB_HOST 127.0.0.1
+ENV CB_PORT 8091
+ENV CB_USER Administrator
+ENV CB_PASSWORD password
+ENV CB_BUCKET beer-sample
+
+#tell image what to do when it starts as a container
+CMD ["/opt/couchbase/configure-node.sh"]

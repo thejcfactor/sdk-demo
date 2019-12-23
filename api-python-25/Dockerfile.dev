@@ -1,0 +1,25 @@
+FROM python:3.7-alpine
+
+# install dependencies
+RUN apk update && \
+    apk add --virtual build-deps gcc libpq python-dev musl-dev
+
+RUN apk add --no-cache libcouchbase-dev libcouchbase
+RUN pip install --no-cache couchbase
+
+WORKDIR /app
+
+COPY requirements.txt /app/requirements.txt
+RUN pip install -r requirements.txt
+
+COPY . /app
+
+ENV API_PORT 8004
+ENV CB_HOST host.docker.internal
+ENV CB_PORT 8091
+ENV CB_USERNAME Administrator
+ENV CB_PW password
+ENV CB_BUCKET beer-sample
+ENV OS_PARENT_MAC true
+
+CMD ["gunicorn", "-b", "0.0.0.0:8004", "app"]

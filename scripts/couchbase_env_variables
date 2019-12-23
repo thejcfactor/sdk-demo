@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#excute w/ 'source ./couchbase_env_variables.sh'
+#make sure you restart VS code if variables are set yet
+export CB_HOST=localhost
+export CB_USERNAME=Administrator
+export CB_PW=password
+export CB_BUCKET=beer-sample
+
+OS_TYPE=$(uname -s)
+#echo $OS_TYPE
+if [ $OS_TYPE == "Darwin" ]; then
+	echo 'Mac OS'
+    export OS_PARENT_MAC=true
+else
+    echo 'Not Mac OS'
+    export OS_PARENT_MAC=false
+fi

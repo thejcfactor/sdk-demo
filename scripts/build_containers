@@ -1,0 +1,52 @@
+#!/bin/bash
+
+SCRIPTS_DIR="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+WORKING_DIR="$(dirname "$SCRIPTS_DIR")"
+DB_603_CONTEXT=$WORKING_DIR/couchbase-603/
+DB_65_CONTEXT=$WORKING_DIR/couchbase-65/
+API_JAVA_27_CONTEXT=$WORKING_DIR/api-java-27/javaSdkDemoApp/
+API_JAVA_30b_CONTEXT=$WORKING_DIR/api-java-30b/javaSdkDemoApp/
+API_NODE_26_CONTEXT=$WORKING_DIR/api-node-26/
+API_PYTHON_25_CONTEXT=$WORKING_DIR/api-python-25/
+WEB_CONTEXT=$WORKING_DIR/web/
+NGINX_CONTENXT=$WORKING_DIR/nginx/
+
+DOCKER_CMD=docker
+
+echo "Building Couchbase v6.0.3 container..."
+DB_BUILD_NAME=cb-6.0.3
+echo $DB_603_CONTEXT
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $DB_603_CONTEXT/Dockerfile.dev $DB_603_CONTEXT
+
+echo "Building Couchbase v6.5 container..."
+DB_BUILD_NAME=cb-6.5
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $DB_65_CONTEXT/Dockerfile.dev $DB_65_CONTEXT
+
+echo "Building Java v2.7 container..."
+DB_BUILD_NAME=sdk-demo-java-27
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $API_JAVA_27_CONTEXT/Dockerfile.dev $API_JAVA_27_CONTEXT
+
+echo "Building Java v3.0 BETA container..."
+DB_BUILD_NAME=sdk-demo-java-30b
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $API_JAVA_30b_CONTEXT/Dockerfile.dev $API_JAVA_30b_CONTEXT
+
+echo "Building NodeJS v2.6 container..."
+DB_BUILD_NAME=sdk-demo-node-26
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $API_NODE_26_CONTEXT/Dockerfile.dev $API_NODE_26_CONTEXT
+
+echo "Building Python v2.5 container..."
+DB_BUILD_NAME=sdk-demo-python-25
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $API_PYTHON_25_CONTEXT/Dockerfile.dev $API_PYTHON_25_CONTEXT
+
+echo "Building Web container..."
+DB_BUILD_NAME=web
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $WEB_CONTEXT/Dockerfile.dev $WEB_CONTEXT
+
+echo "Building NGINX container..."
+DB_BUILD_NAME=sdk-demo-nginx
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $NGINX_CONTENXT/Dockerfile-compose.dev $NGINX_CONTENXT
+
+echo "All containers built."
+
+echo "Remote dangling images..."
+$DOCKER_CMD image prune -f

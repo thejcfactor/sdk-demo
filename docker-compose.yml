@@ -1,0 +1,58 @@
+version: "3"
+services:
+  web:
+    container_name: web
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./web
+      args: 
+        - VUE_APP_API_URL=http://localhost:80
+    volumes:
+      - /app/node_modules
+      - ./web:/app
+    ports:
+      - "8080:8080"
+  api-java-27:
+    container_name: api-java-27
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./api-java-27/javaSdkDemoApp
+    ports:
+      - "8001:8001"
+  api-java-30b:
+    container_name: api-java-30b
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./api-java-30b/javaSdkDemoApp
+    ports:
+      - "8002:8002"
+  api-node-26:
+    container_name: api-node-26
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./api-node-26
+    volumes:
+      - /app/node_modules
+      - ./api-node-26:/app
+    ports:
+      - "8003:8003"
+  api-python-25:
+    container_name: api-python-25
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./api-python-25
+    ports:
+      - "8004:8004"
+  nginx:
+    container_name: sdk-demo-nginx
+    build:
+      dockerfile: Dockerfile-compose.dev
+      context: ./nginx
+    #restart: always
+    depends_on:
+      - "web"
+      - "api-node-26"
+      - "api-java-27"
+      - "api-python-25"
+    ports:
+      - "80:80"

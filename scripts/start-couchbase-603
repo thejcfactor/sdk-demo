@@ -1,0 +1,43 @@
+#!/bin/bash
+
+SCRIPTS_DIR="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+WORKING_DIR="$(dirname "$SCRIPTS_DIR")"
+DB_CONTEXT=$WORKING_DIR/couchbase-603/
+
+DB_BUILD_NAME=couchbase-6.0.3
+DB_CONTAINER_NAME=cb-6.0.3
+
+DOCKER_CMD=docker
+
+MAX_TRIES=10
+
+function couchbaseIsInitialized(){
+    $DOCKER_CMD logs $DB_CONTAINER_NAME | grep "Data loaded succesfully"
+}
+
+echo "Building Couchmovies Couchbase container..."
+
+$DOCKER_CMD build -t $DB_BUILD_NAME -f $DB_CONTEXT/Dockerfile.dev $DB_CONTEXT
+
+echo "Couchbase 6.0.3 container built..."
+
+echo "Starting Couchbase 6.0.3 container..."
+
+$DOCKER_CMD run --rm --name $DB_CONTAINER_NAME -d -p 8091-8094:8091-8094 -p 11210-11211:11210-11211 $DB_BUILD_NAME
+
+count=1
+while [ $count -le $MAX_TRIES ]; do
+  init=$(couchbaseIsInitialized)
+  if [[ ! -z $init ]]; then
+    echo "$DB_CONTAINER_NAME is initialized."
+    break
+  fi
+  echo "Waiting for $DB_CONTAINER_NAME to initialize..."
+  ((count++))
+  sleep 15
+done
+
+if [ $count -gt $MAX_TRIES ]; then
+  echo "Error: $DB_CONTAINER_NAME could not initialize.  Exiting setup."
+  exit 1
+fi
