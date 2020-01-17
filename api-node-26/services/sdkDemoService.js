@@ -64,6 +64,18 @@ class SdkDemoService {
     this.repository.getMulti(docIds, callback);
   }
 
+  getReplica(docId, callback){
+    this.repository.getReplica(docId, callback);
+  }
+
+  touch(docId, expiry, callback){
+    this.repository.touch(docId, expiry, callback);
+  }
+
+  getAndTouch(docId, expiry, callback){
+    this.repository.getAndTouch(docId, expiry, callback);
+  }
+
   upsert(docId, doc, options, callback){
     this.repository.upsert(docId, doc, options, callback);
   }
@@ -82,6 +94,14 @@ class SdkDemoService {
 
   lookupIn(docId, path, callback){
     this.repository.lookupIn(docId, path, callback);
+  }
+
+  mutateIn(docId, path, value, callback){
+    this.repository.mutateIn(docId, path, value, callback);
+  }
+
+  fts(term, indexName, fuzziness, callback){
+    this.repository.fts(term, indexName, fuzziness, callback);
   }
 
   isParentHostMac() {

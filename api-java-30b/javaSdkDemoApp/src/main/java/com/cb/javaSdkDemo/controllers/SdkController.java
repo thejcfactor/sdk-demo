@@ -101,6 +101,41 @@ public class SdkController {
         }
     }
 
+    @RequestMapping(value="/getReplica", method = RequestMethod.POST)
+    public ResponseEntity<? extends IResponse> getReplica(@RequestBody Map<String, String> requestArgs){
+        try {
+            String docId = requestArgs.get("docId");
+            Result<Map<String, Object>> result = this.service.getReplica(docId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
+        }
+    }
+
+    @RequestMapping(value="/touch", method = RequestMethod.POST)
+    public ResponseEntity<? extends IResponse> touch(@RequestBody Map<String, String> requestArgs){
+        try {
+            String docId = requestArgs.get("docId");
+            Integer expiry = Integer.parseInt(requestArgs.get("expiry"));
+            Result<Boolean> result = this.service.touch(docId, expiry);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
+        }
+    }
+
+    @RequestMapping(value="/getAndTouch", method = RequestMethod.POST)
+    public ResponseEntity<? extends IResponse> getAndTouch(@RequestBody Map<String, String> requestArgs){
+        try {
+            String docId = requestArgs.get("docId");
+            Integer expiry = Integer.parseInt(requestArgs.get("expiry"));
+            Result<Map<String, Object>> result = this.service.getAndTouch(docId, expiry);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
+        }
+    }
+
     @RequestMapping(value="/upsert", method = RequestMethod.POST)
     public ResponseEntity<? extends IResponse> upsert(@RequestBody Map<String, String> requestArgs){
         try {
@@ -149,7 +184,7 @@ public class SdkController {
     }
 
     @RequestMapping(value="/lookupIn", method = RequestMethod.POST)
-    public ResponseEntity<? extends IResponse> lookupIN(@RequestBody Map<String, String> requestArgs){
+    public ResponseEntity<? extends IResponse> lookupIn(@RequestBody Map<String, String> requestArgs){
         try {
             String docId = requestArgs.get("docId");
             String path = requestArgs.get("path");
@@ -157,6 +192,34 @@ public class SdkController {
             Result<Map<String, Object>> result = this.service.lookupIn(docId, path, resultType);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
+        }
+    }
+
+    @RequestMapping(value="/mutateIn", method = RequestMethod.POST)
+    public ResponseEntity<? extends IResponse> mutateIn(@RequestBody Map<String, String> requestArgs){
+        try {
+            String docId = requestArgs.get("docId");
+            String path = requestArgs.get("path");
+            String value = requestArgs.get("value");
+            String resultType = requestArgs.get("resultType");
+            Result<Map<String, Object>> result = this.service.mutateIn(docId, path, value, resultType);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
+        }
+    }
+
+    @RequestMapping(value="/fts", method = RequestMethod.POST)
+    public ResponseEntity<? extends IResponse> fts(@RequestBody Map<String, String> requestArgs){
+        try {
+            String term = requestArgs.get("term");
+            String index = new String();
+            Integer fuzzy = Integer.parseInt(requestArgs.get("fuzziness"));
+            Result<List<Map<String, List<String>>>> result = this.service.fts(term, index, fuzzy);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.out.println(e.getStackTrace());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
         }
     }

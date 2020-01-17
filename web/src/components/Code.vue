@@ -1,6 +1,6 @@
 <template>
   <b-row align-h="center">
-    <b-col cols="5" class="pr-1">
+    <b-col cols="7" class="pr-1">
       <b-card no-body>
         <b-card-text>
           <div class="code-card-title">
@@ -29,7 +29,7 @@
         </b-card-text>
       </b-card>
     </b-col>
-    <b-col cols="2" class="px-1">
+    <b-col cols="3" class="px-1">
       <b-card no-body>
         <b-card-text>
           <div class="code-card-title">
@@ -77,143 +77,6 @@
                 </div>
               </div>
             </div>
-          </div>
-        </b-card-text>
-      </b-card>
-    </b-col>
-    <b-col cols="5" class="pl-1">
-      <b-card no-body>
-        <b-card-text>
-          <div
-            class="d-flex flex-row justify-content-center align-items-center"
-          >
-            <div class="fake-element">Fake</div>
-            <div class="code-card-title d-flex">
-              Code to output
-              <div class="info" v-on:click.stop="onHelpClick('output-cmds')">
-                <font-awesome-icon :icon="icons.info"></font-awesome-icon>
-              </div>
-            </div>
-            <div class="ml-auto download-btn-div">
-              <button
-                id="download-btn"
-                class="code-btn"
-                v-on:click="onDownloadCodeClick"
-                :disabled="!(selectedOutputCommands.length > 0)"
-              >
-                <font-awesome-icon :icon="icons.Download"></font-awesome-icon>
-              </button>
-              <b-popover target="download-btn" placement="top" triggers="hover">
-                Download selected output commands.
-              </b-popover>
-            </div>
-          </div>
-          <hr class="divider" />
-          <div class="code-card-content">
-            <b-row align-h="center">
-              <b-col>
-                <b-card no-body class="m-1">
-                  <b-card-text>
-                    <div class="code-card-sub-title">
-                      Available Commands
-                    </div>
-                    <hr class="divider" />
-                    <div
-                      class="d-flex flex-column justify-content-start align-items-stretch available-cmds-list"
-                    >
-                      <div
-                        v-for="(cmd, index) in availableOutputCommands"
-                        :key="index"
-                        class="available-cmd-list-item"
-                        @click="onAvailCommandClick(cmd)"
-                        v-bind:class="{
-                          'item-selected': cmd.Selected
-                        }"
-                      >
-                        {{ cmd.Label }}
-                      </div>
-                    </div>
-                  </b-card-text>
-                </b-card>
-              </b-col>
-              <b-col cols="1">
-                <div
-                  class="d-flex flex-column justify-content-center align-items-center"
-                >
-                  <div>
-                    <button
-                      id="all-to-output-btn"
-                      class="code-btn"
-                      v-on:click="onMoveCommand('AllToOut')"
-                      :disabled="!(availableOutputCommands.length > 0)"
-                    >
-                      <font-awesome-icon
-                        :icon="icons.DblRight"
-                      ></font-awesome-icon>
-                    </button>
-                  </div>
-                  <div>
-                    <button
-                      id="avail-to-output-btn"
-                      class="code-btn"
-                      v-on:click="onMoveCommand('AvailToOut')"
-                      :disabled="!(selectedAvailableCommands.length > 0)"
-                    >
-                      <font-awesome-icon
-                        :icon="icons.Right"
-                      ></font-awesome-icon>
-                    </button>
-                  </div>
-                  <div>
-                    <button
-                      id="output-to-avail-btn"
-                      class="code-btn"
-                      v-on:click="onMoveCommand('OutToAvail')"
-                      :disabled="!(selectedSelectedOutputCommands.length > 0)"
-                    >
-                      <font-awesome-icon :icon="icons.Left"></font-awesome-icon>
-                    </button>
-                  </div>
-                  <div>
-                    <button
-                      id="all-to-avail-btn"
-                      class="code-btn"
-                      v-on:click="onMoveCommand('AllToAvail')"
-                      :disabled="!(selectedOutputCommands.length > 0)"
-                    >
-                      <font-awesome-icon
-                        :icon="icons.DblLeft"
-                      ></font-awesome-icon>
-                    </button>
-                  </div>
-                </div>
-              </b-col>
-              <b-col>
-                <b-card no-body>
-                  <b-card-text>
-                    <div class="code-card-sub-title">
-                      Selected Commands
-                    </div>
-                    <hr class="divider" />
-                    <div
-                      class="d-flex flex-column justify-content-start align-items-stretch selected-cmds-list"
-                    >
-                      <div
-                        v-for="(cmd, index) in selectedOutputCommands"
-                        :key="index"
-                        class="selected-cmd-list-item"
-                        @click="onOutputCommandClick(cmd)"
-                        v-bind:class="{
-                          'item-selected': cmd.Selected
-                        }"
-                      >
-                        {{ cmd.Label }}
-                      </div>
-                    </div>
-                  </b-card-text>
-                </b-card>
-              </b-col>
-            </b-row>
           </div>
         </b-card-text>
       </b-card>
@@ -445,38 +308,9 @@ export default {
   margin-left: 20px;
 }
 
-.code-btn {
-  border: 1px solid #6c757d;
-  border-radius: 4px;
-  background-color: white;
-  color: #6c757d;
-  font-size: 0.9em;
-  cursor: pointer;
-  float: left;
-  outline: none;
-}
-
-.code-btn:hover {
-  background-color: #6c757d;
-  color: #fff;
-}
-
 .fake-element {
   margin-right: auto;
   visibility: hidden;
-}
-
-button.code-btn:disabled,
-button.code-btn[disabled],
-button.code-btn[disabled]:hover {
-  border: 1px solid #999999;
-  background-color: #cccccc;
-  color: #666666;
-  cursor: not-allowed;
-}
-
-.download-btn-div {
-  margin: 5px 5px 0 0;
 }
 
 .code-card-content {

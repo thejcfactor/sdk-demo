@@ -1,5 +1,6 @@
 const couchbase = require("couchbase");
 const N1qlQuery = require("couchbase").N1qlQuery;
+const searchQuery = require("couchbase").SearchQuery;
 
 class SdkRepository {
   constructor() {
@@ -95,6 +96,32 @@ class SdkRepository {
     });
   }
 
+  getReplica(docId, callback){
+    this.bucket.getReplica(docId, function(err, doc){
+      let document = null;
+      if(!err){
+        document = doc;
+      }
+      callback(err, document);
+    });
+  }
+
+  touch(docId, expiry, callback){
+    this.bucket.touch(docId, expiry, function(err, result){
+      callback(err, result);
+    });
+  }
+
+  getAndTouch(docId, expiry, callback){
+    this.bucket.getAndTouch(docId, expiry, function(err, doc){
+      let document = null;
+      if(!err){
+        document = doc;
+      }
+      callback(err, document);
+    });
+  }
+
   upsert(docId, docValue, options, callback){
     let self = this;
     this.bucket.upsert(docId, docValue, options, function(err, result){
@@ -155,6 +182,43 @@ class SdkRepository {
         callback(err, subDoc);
     });
     
+  }
+
+  mutateIn(docId, path, value, callback){
+    this.bucket.mutateIn(docId)
+      .upsert(path, value).execute(function(err, result){
+        let subDoc = null;
+        if(!err){
+          //console.log(result);
+          subDoc = {
+            path: path,
+            success: result.content(path) ? true : false
+          };
+        }
+        callback(err, subDoc);
+    });
+  }
+
+  fts(term, indexName, fuzziness, callback){
+    if(indexName == null){
+      indexName = "beer-search";
+    }
+
+    let match = searchQuery.term(term).fuzziness(fuzziness);
+    let query = searchQuery.new(indexName, match).limit(10).highlight();
+
+    this.bucket.query(query, function(err, res, meta){
+      let results = [];
+      if(!err){
+        for(let i = 0; i < res.length; i++){
+          results.push({
+            "id": res[i].id,
+            "hit": res[i].locations
+          });
+        }
+      }
+      callback(err, results);
+    });
   }
 
   disconnect() {

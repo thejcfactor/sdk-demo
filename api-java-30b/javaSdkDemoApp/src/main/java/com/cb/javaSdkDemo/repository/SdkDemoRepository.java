@@ -10,7 +10,7 @@ import com.couchbase.client.java.query.QueryResult;
 import com.couchbase.client.java.kv.GetResult;
 //import com.couchbase.client.java.kv.LookupInSpec;
 //import com.couchbase.client.java.kv.MutationResult;
-import com.couchbase.client.java.kv.MutationResult;
+
 import com.couchbase.transactions.Transactions;
 import com.couchbase.transactions.TransactionDurabilityLevel;
 import com.couchbase.transactions.config.TransactionConfigBuilder;
@@ -20,6 +20,18 @@ import com.couchbase.transactions.TransactionGetResult;
 
 import com.couchbase.client.java.kv.LookupInResult;
 import com.couchbase.client.java.kv.LookupInSpec;
+import com.couchbase.client.java.kv.MutationResult;
+import com.couchbase.client.java.kv.MutateInSpec;
+
+/*FTS*/
+//import com.couchbase.client.java.search.*;
+//import com.couchbase.client.java.search.queries.*;
+import com.couchbase.client.java.search.SearchQuery;
+import com.couchbase.client.java.search.SearchOptions;
+import com.couchbase.client.java.search.result.SearchResult;
+import com.couchbase.client.java.search.result.SearchRow;
+
+
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -28,13 +40,15 @@ import rx.Observable;
 import rx.functions.Func1;
 */
 
-import java.util.ArrayList;
+import java.time.Duration;
+/*import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
-import java.util.Arrays;
+import java.util.Arrays;*/
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 //import org.springframework.dao.DataRetrievalFailureException;
 
@@ -171,12 +185,32 @@ public final class SdkDemoRepository {
         return docs;
     }
 
-    public Mono<Map<String, GetResult>> Test(String docId){
-        GetResult result = collection.get(docId);
-        return Mono.just(new HashMap<String, GetResult>(){{
-            put(docId, result);
-        }});
+    public Map<String, Object> getReplica(String docId){
+        GetResult result = collection.getAnyReplica(docId);
+
+        JsonObject doc = result.contentAsObject();
+
+        return new HashMap<String, Object>(){{
+            put(docId, doc.toMap());
+        }};
     }
+
+    public Boolean touch(String docId, Integer expiry){
+        MutationResult result = collection.touch(docId, Duration.ofSeconds(expiry));
+
+        return result.cas() > 0 ? true : false;
+    }
+
+    public Map<String, Object> getAndTouch(String docId, Integer expiry){
+        
+        GetResult result = collection.getAndTouch(docId, Duration.ofSeconds(expiry));
+
+        JsonObject doc = result.contentAsObject();
+        
+        return new HashMap<String, Object>(){{
+            put(docId, doc.toMap());
+        }};
+    } 
 
     public Map<String, Object> upsert(String docId, String doc){
         JsonObject content = JsonObject.fromJson(doc);
@@ -232,6 +266,45 @@ public final class SdkDemoRepository {
         }
     }
 
+    public Map<String, Object> mutateIn(String docId, String path, String value, String resultType){
+        Boolean valueIsInt = false;
+        try{
+            Integer.parseInt(value);
+            valueIsInt = true;
+        }
+        catch(NumberFormatException e){
+            valueIsInt = false;
+        }
+
+        if(valueIsInt){
+            Integer intValue = Integer.parseInt(value);
+            collection.mutateIn(docId, Collections.singletonList(MutateInSpec.upsert(path, intValue)));
+        }
+        else{
+            collection.mutateIn(docId, Collections.singletonList(MutateInSpec.upsert(path, value)));
+        }
+
+        return lookupIn(docId, path, resultType);
+    }
+
+    public List<Map<String, List<String>>> fts(String searchTerm, String indexName, Integer fuzzyLevel) {
+        if (indexName.isEmpty()) {
+            indexName = "beer-search";
+        }
+
+        // MatchQuery query = SearchQuery.match(searchTerm).fuzziness(fuzzyLevel);
+        // SearchQuery query = SearchQuery.match(searchTerm);
+        SearchResult result = this.cluster.searchQuery(indexName, SearchQuery.queryString(searchTerm),
+                SearchOptions.searchOptions().limit(10).highlight());
+
+        List<Map<String, List<String>>> data = new ArrayList<Map<String, List<String>>>();
+        for (SearchRow row : result.rows()) {
+            data.add(row.fragments());
+        }
+
+        return data;
+    }
+
     public List<Map<String, Object>> executeTransaction(String doc1Id, String doc1, String doc2Id, String doc2, Boolean rollback){
         // Durability: NONE/MAJORITY/PERSIST_TO_MAJORITY/MAJORITY_AND_PERSIST_ON_MASTER
         // TIMEOUT: Max TTL of the transaction
@@ -247,13 +320,19 @@ public final class SdkDemoRepository {
                 JsonObject doc1ToModifyTxContent = JsonObject.fromJson(doc1);
                 ctx.replace(doc1ToModifyTx, doc1ToModifyTxContent);
 
-                if(rollback){
-                    throw new IllegalStateException("Throwing fake rollback.");
-                }
-
                 TransactionGetResult doc2ToModifyTx = ctx.get(collection, doc2Id);
                 JsonObject doc2ToModifyTxContent = JsonObject.fromJson(doc2);
                 ctx.replace(doc2ToModifyTx, doc2ToModifyTxContent);
+
+                /*
+                    Artifical reason for a rollback, but used to demonstrate the rollback can occur.
+
+                    Another easy way to demonstrate a type of rollback (i.e. error occurs during txn):
+                        attempt to get a document w/ a key that doesn't exist
+                */
+                if(rollback){
+                    ctx.rollback();
+                }
 
                 ctx.commit();
             });
@@ -269,9 +348,15 @@ public final class SdkDemoRepository {
     }
 
     public List<Map<String, Object>> executeBeerSampleTransaction(String newBeerId, String newBeer, String breweryId, Boolean rollback){
-        // Durability: NONE/MAJORITY/PERSIST_TO_MAJORITY/MAJORITY_AND_PERSIST_ON_MASTER
-        // TIMEOUT: Max TTL of the transaction
-        // OBS: As I'm running in a single node the Durability is set to None
+        //  Durability: 
+        //      NONE:  disable durability settings
+        //      MAJORITY:  Wait until each write is available in-memory on a majority of configured replicas, before continuing
+        //      PERSIST_TO_MAJORITY:  Wait until each write is both available in-memory and persisted to disk on a majority of 
+        //          configured replicas, before continuing
+        //      MAJORITY_AND_PERSIST_ON_MASTER:  Wait until each write is available in-memory on a majority of configured replicas, and also 
+        //          persisted to disk on master node, before continuing
+        // 
+        //  TIMEOUT: Max TTL of the transaction
         Transactions transactions = Transactions.create(cluster, TransactionConfigBuilder.create()
                 .durabilityLevel(TransactionDurabilityLevel.NONE)
                 .build());
@@ -282,14 +367,20 @@ public final class SdkDemoRepository {
                 JsonObject newBeerContent = JsonObject.fromJson(newBeer);
                 ctx.insert(collection, newBeerId, newBeerContent);
 
-                if(rollback){
-                    throw new IllegalStateException("Throwing fake rollback.");
-                }
-
                 TransactionGetResult breweryTx = ctx.get(collection, breweryId);
                 JsonObject breweryContent = breweryTx.contentAsObject();
                 breweryContent.put("beer_count", breweryContent.getInt("beer_count") == null ? 1 : breweryContent.getInt("beer_count") + 1);
                 ctx.replace(breweryTx, breweryContent);
+
+                /*
+                    Artifical reason for a rollback, but used to demonstrate the rollback can occur.
+
+                    Another easy way to demonstrate a type of rollback (i.e. error occurs during txn):
+                        attempt to get a document w/ a key that doesn't exist
+                */
+                if(breweryContent.getInt("beer_count") > 12){
+                    ctx.rollback();
+                }
 
                 ctx.commit();
             });

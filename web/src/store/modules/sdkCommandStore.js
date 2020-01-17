@@ -60,6 +60,71 @@ export const state = {
       Info: `Enter document keys into the provided text area. Format: ["key1","key2", etc.]. Click the "Run" button to retrieve the document.`
     },
     {
+      Name: "getReplica",
+      Label: "getReplica()",
+      ApiUrl: "getReplica",
+      Selected: false,
+      Parent: "KV",
+      InputOptions: [
+        {
+          Name: "docId",
+          Label: "Enter docId below:",
+          InputType: "INPUT",
+          Hint: "{{DOC_ID}}",
+          Value: ""
+        }
+      ],
+      Info: `Enter a document key into the provided text area.  Click the "Run" button to retrieve the document from a replica vbucket.  Note, this will not work with only a 1 node instance.`
+    },
+    {
+      Name: "touch",
+      Label: "touch()",
+      ApiUrl: "touch",
+      Selected: false,
+      Parent: "KV",
+      InputOptions: [
+        {
+          Name: "docId",
+          Label: "Enter docId below:",
+          InputType: "INPUT",
+          Hint: "{{DOC_ID}}",
+          Value: ""
+        },
+        {
+          Name: "expiry",
+          Label: "Enter expiry below:",
+          InputType: "INPUT",
+          Hint: "30",
+          Value: ""
+        }
+      ],
+      Info: `Enter a document key and expiry (seconds) into the provided text areas.  Click the "Run" button to set the document's TTL.`
+    },
+    {
+      Name: "getAndTouch",
+      Label: "getAndTouch()",
+      ApiUrl: "getAndTouch",
+      Selected: false,
+      Parent: "KV",
+      InputOptions: [
+        {
+          Name: "docId",
+          Label: "Enter docId below:",
+          InputType: "INPUT",
+          Hint: "{{DOC_ID}}",
+          Value: ""
+        },
+        {
+          Name: "expiry",
+          Label: "Enter expiry below:",
+          InputType: "INPUT",
+          Hint: "30",
+          Value: ""
+        }
+      ],
+      Info: `Enter a document key and expiry (seconds) into the provided text areas.  Click the "Run" button to set the document's TTL and retrieve the document.`
+    },
+    {
       Name: "upsert",
       Label: "upsert()",
       ApiUrl: "upsert",
@@ -183,41 +248,88 @@ export const state = {
         }
       ],
       Info: `Enter a document key and the sub-document content's path into the provide text areas.
-       Select the result type: Primitive is the sub-document's content is a String, Boolean, Float, etc., Object if the sub-document's content is a nest JSON object or
+       Select the result type: Primitive if the sub-document's content is a String, Boolean, Float, etc., Object if the sub-document's content is a nest JSON object or
+       Array if the sub-document's content is a JSON array.\n  Click the "Run" button to retrieve the sub-document content.`
+    },
+    {
+      Name: "mutateIn",
+      Label: "mutateIn()",
+      ApiUrl: "mutateIn",
+      Selected: false,
+      Parent: "KV",
+      InputOptions: [
+        {
+          Name: "docId",
+          Label: "Enter docId below:",
+          InputType: "INPUT",
+          Hint: "{{SAMPLE_DOC_ID}}",
+          Value: ""
+        },
+        {
+          Name: "path",
+          Label: "Enter sub-document path below:",
+          InputType: "INPUT",
+          Hint: "",
+          Value: ""
+        },
+        {
+          Name: "value",
+          Label: "Enter sub-document value below:",
+          InputType: "INPUT",
+          Hint: "",
+          Value: ""
+        },
+        {
+          Name: "resultType",
+          Label: "Select result type:",
+          InputType: "SELECT",
+          InputOptions: [
+            { value: "primitive", text: "Primitive" },
+            { value: "object", text: "Object" },
+            { value: "array", text: "Array" }
+          ],
+          Hint: "",
+          Value: ""
+        }
+      ],
+      Info: `Enter a document key, the sub-document content's path and the new sub-document content into the provide text areas.
+       Select the result type: Primitive if the sub-document's content is a String, Boolean, Float, etc., Object if the sub-document's content is a nest JSON object or
        Array if the sub-document's content is a JSON array.\n  Click the "Run" button to retrieve the sub-document content.`
     },
     {
       Name: "fts",
       Label: "Full Text Search (FTS)",
-      ApiUrl: "/api/recvPOST/fts",
+      ApiUrl: "fts",
       Selected: false,
       Parent: null,
       InputOptions: [
         {
-          Name: "ftsSearchTerm",
+          Name: "searchTerm",
           Label: "Enter FTS search term below:",
           InputType: "INPUT",
           Hint: "hops",
           Value: ""
-        }
-        /*{
+        },
+        /*
+        TODO:  index selection?
+        {
           Name: "ftsDescription",
           Label: "Enter attribute below:",
           InputType: "INPUT",
           //TODO:  configure a default
           Hint: "description",
           Value: ""
-        },
+        },*/
         {
-          Name: "ftsIndex",
-          Label: "Enter FTS index below:",
+          Name: "fuzziness",
+          Label: "Enter FTS fuzziness below:",
           InputType: "INPUT",
-          //TODO:  configure a default
-          Hint: "cb121_typed_product",
+          Hint: "2",
           Value: ""
-        }*/
+        }
       ],
-      Info: `This command is under constuction...`
+      Info: `Enter a search term (i.e. hops, bitter, full-bodied, etc.) and fuzziness into the provided input fields.\n
+      Click the "Run" button to retrieve full text search results.`
     }
   ],
   currentDocumentationUrl: null,
@@ -428,6 +540,7 @@ export const actions = {
         .catch(error => {
           console.log("Error occurred running command.");
           console.log(error);
+          commit("SET_RESULTS", error);
         });
     }
   },

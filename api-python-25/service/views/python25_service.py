@@ -56,7 +56,7 @@ def connect():
         return jsonify(response), 500
 
 @python25_service.route('/n1qlQuery', methods=['POST'])
-def n1qlQuery():
+def n1ql_query():
     request_args = request.get_json()
 
     if 'query' not in request_args:
@@ -66,7 +66,7 @@ def n1qlQuery():
     query = request_args['query']
 
     try:
-        results = repository.n1qlQuery(query)
+        results = repository.n1ql_query(query)
         response['message'] = 'Executed N1QL query.'
         response['data'] = results
         return jsonify(response)
@@ -83,10 +83,10 @@ def get():
         response['message'] = 'No docId provided.'
         return jsonify(response), 500
 
-    docId = request_args['docId']
+    doc_id = request_args['docId']
 
     try:
-        results = repository.get(docId)
+        results = repository.get(doc_id)
         response['message'] = 'Executed get() KV operation.'
         response['data'] = results
         return jsonify(response)
@@ -96,22 +96,84 @@ def get():
         return jsonify(response), 500
 
 @python25_service.route('/getMulti', methods=['POST'])
-def getMulti():
+def get_multi():
     request_args = request.get_json()
 
     if 'docIds' not in request_args:
         response['message'] = 'No docId(s) provided.'
         return jsonify(response), 500
 
-    docIds = request_args['docIds']
+    doc_ids = request_args['docIds']
 
     try:
-        results = repository.getMulti(docIds)
+        results = repository.get_multi(doc_ids)
         response['message'] = 'Executed getMulti() KV operation.'
         response['data'] = results
         return jsonify(response)
     except Exception as error:
         response['message'] = 'Error trying to run getMulti() KV operation.'
+        response['data'] = str(error)
+        return jsonify(response), 500
+
+@python25_service.route('/getReplica', methods=['POST'])
+def get_replica():
+    request_args = request.get_json()
+
+    if 'docId' not in request_args:
+        response['message'] = 'No docId provided.'
+        return jsonify(response), 500
+
+    doc_id = request_args['docId']
+
+    try:
+        results = repository.get_replica(doc_id)
+        response['message'] = 'Executed getReplica() KV operation.'
+        response['data'] = results
+        return jsonify(response)
+    except Exception as error:
+        response['message'] = 'Error trying to run getReplica() KV operation.'
+        response['data'] = str(error)
+        return jsonify(response), 500
+
+@python25_service.route('/touch', methods=['POST'])
+def touch():
+    request_args = request.get_json()
+
+    if 'docId' not in request_args or 'expiry' not in request_args:
+        response['message'] = 'No docId or TTL provided.'
+        return jsonify(response), 500
+
+    doc_id = request_args['docId']
+    expiry = int(request_args['expiry'])
+
+    try:
+        results = repository.touch(doc_id, expiry)
+        response['message'] = 'Executed touch() KV operation.'
+        response['data'] = results
+        return jsonify(response)
+    except Exception as error:
+        response['message'] = 'Error trying to run touch() KV operation.'
+        response['data'] = str(error)
+        return jsonify(response), 500
+
+@python25_service.route('/getAndTouch', methods=['POST'])
+def getAndTouch():
+    request_args = request.get_json()
+
+    if 'docId' not in request_args or 'expiry' not in request_args:
+        response['message'] = 'No docId or TTL provided.'
+        return jsonify(response), 500
+
+    doc_id = request_args['docId']
+    expiry = int(request_args['expiry'])
+
+    try:
+        results = repository.get_and_touch(doc_id, expiry)
+        response['message'] = 'Executed getAndTouch() KV operation.'
+        response['data'] = results
+        return jsonify(response)
+    except Exception as error:
+        response['message'] = 'Error trying to run getAndTouch() KV operation.'
         response['data'] = str(error)
         return jsonify(response), 500
 
@@ -124,10 +186,10 @@ def upsert():
         return jsonify(response), 500
 
     try:
-        docId = request_args['docId']
-        docValue = json.loads(request_args['doc'])
+        doc_id = request_args['docId']
+        doc_value = json.loads(request_args['doc'])
 
-        results = repository.upsert(docId, docValue)
+        results = repository.upsert(doc_id, doc_value)
         response['message'] = 'Executed upsert() KV operation.'
         response['data'] = results
         return jsonify(response)
@@ -145,10 +207,10 @@ def insert():
         return jsonify(response), 500
 
     try:
-        docId = request_args['docId']
-        docValue = json.loads(request_args['doc'])
+        doc_id = request_args['docId']
+        doc_value = json.loads(request_args['doc'])
 
-        results = repository.insert(docId, docValue)
+        results = repository.insert(doc_id, doc_value)
         response['message'] = 'Executed insert() KV operation.'
         response['data'] = results
         return jsonify(response)
@@ -166,10 +228,10 @@ def replace():
         return jsonify(response), 500
 
     try:
-        docId = request_args['docId']
-        docValue = json.loads(request_args['doc'])
+        doc_id = request_args['docId']
+        doc_value = json.loads(request_args['doc'])
 
-        results = repository.replace(docId, docValue)
+        results = repository.replace(doc_id, doc_value)
         response['message'] = 'Executed replace() KV operation.'
         response['data'] = results
         return jsonify(response)
@@ -186,10 +248,10 @@ def remove():
         response['message'] = 'No docId provided.'
         return jsonify(response), 500
 
-    docId = request_args['docId']
+    doc_id = request_args['docId']
 
     try:
-        results = repository.remove(docId)
+        results = repository.remove(doc_id)
         response['message'] = 'Executed remove() KV operation.'
         response['data'] = results
         return jsonify(response)
@@ -199,23 +261,69 @@ def remove():
         return jsonify(response), 500
 
 @python25_service.route('/lookupIn', methods=['POST'])
-def lookupIn():
+def lookup_in():
     request_args = request.get_json()
 
     if 'docId' not in request_args or 'path' not in request_args:
         response['message'] = 'No docId or sub-document path provided.'
         return jsonify(response), 500
 
-    docId = request_args['docId']
+    doc_id = request_args['docId']
     path = request_args['path']
 
     try:
-        results = repository.lookupIn(docId, path)
+        results = repository.lookup_in(doc_id, path)
         response['message'] = 'Executed lookupIn() KV operation.'
         response['data'] = results
         return jsonify(response)
     except Exception as error:
         response['message'] = 'Error trying to run lookupIn() KV operation.'
+        response['data'] = str(error)
+        return jsonify(response), 500
+
+@python25_service.route('/mutateIn', methods=['POST'])
+def mutate_in():
+    request_args = request.get_json()
+
+    if 'docId' not in request_args or 'path' not in request_args:
+        response['message'] = 'No docId or sub-document path provided.'
+        return jsonify(response), 500
+
+    doc_id = request_args['docId']
+    path = request_args['path']
+    value = request_args['value']
+
+    try:
+        results = repository.mutate_in(doc_id, path, value)
+        response['message'] = 'Executed mutateIn() KV operation.'
+        response['data'] = results
+        return jsonify(response)
+    except Exception as error:
+        response['message'] = 'Error trying to run mutateIn() KV operation.'
+        response['data'] = str(error)
+        return jsonify(response), 500
+
+@python25_service.route('/fts', methods=['POST'])
+def fts():
+    request_args = request.get_json()
+
+    if 'term' not in request_args:
+        response['message'] = 'No FTS term provided.'
+        return jsonify(response), 500
+
+    term = request_args['term']
+    #TODO:
+    #index = request_args['index']
+    index = None
+    fuzziness = request_args['fuzziness']
+
+    try:
+        results = repository.fts(term, index, fuzziness)
+        response['message'] = 'Executed FTS.'
+        response['data'] = results
+        return jsonify(response)
+    except Exception as error:
+        response['message'] = 'Error trying to run FTS operation.'
         response['data'] = str(error)
         return jsonify(response), 500
 

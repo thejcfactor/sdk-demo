@@ -15,6 +15,10 @@ export default {
       commandPayload.Payload = this.getGetMultiCommandPayload(inputOptions);
     } else if (command.Name == "getReplica") {
       commandPayload.Payload = this.getGetReplicaCommandPayload(inputOptions);
+    } else if (command.Name == "touch") {
+      commandPayload.Payload = this.getTouchCommandPayload(inputOptions);
+    } else if (command.Name == "getAndTouch") {
+      commandPayload.Payload = this.getGetAndTouchCommandPayload(inputOptions);
     } else if (command.Name == "insert") {
       commandPayload.Payload = this.getInsertCommandPayload(inputOptions);
     } else if (command.Name == "upsert") {
@@ -25,21 +29,16 @@ export default {
       commandPayload.Payload = this.getRemoveCommandPayload(inputOptions);
     } else if (command.Name == "lookupIn") {
       commandPayload.Payload = this.getLookupInCommandPayload(inputOptions);
-    } else if (command.Name == "fts") {
-      /*else if (command.Name == "mutateIn") {
-        commandPayload.Payload = this.getMutateInCommandPayload(inputOptions);
-      } else if (command.Name == "touch") {
-        commandPayload.Payload = this.getTouchCommandPayload(inputOptions);
-      } else if (command.Name == "getAndTouch") {
-        commandPayload.Payload = this.getGetAndTouchCommandPayload(inputOptions);
-      } */
-      commandPayload.Payload = this.getFTSCommandPayload(inputOptions);
+    } else if (command.Name == "mutateIn") {
+      commandPayload.Payload = this.getMutateInCommandPayload(inputOptions);
     } else if (command.Name == "acid") {
       commandPayload.Payload = this.getACIDCommandPayload(inputOptions);
     } else if (command.Name == "acid-beer-sample") {
       commandPayload.Payload = this.getACIDBeerSampleCommandPayload(
         inputOptions
       );
+    } else if (command.Name == "fts") {
+      commandPayload.Payload = this.getFTSCommandPayload(inputOptions);
     }
 
     return commandPayload;
@@ -66,6 +65,22 @@ export default {
     let docId = _.findWhere(inputOptions, { Name: "docId" });
     return {
       docId: docId.Value
+    };
+  },
+  getTouchCommandPayload(inputOptions) {
+    let docId = _.findWhere(inputOptions, { Name: "docId" });
+    let expiry = _.findWhere(inputOptions, { Name: "expiry" });
+    return {
+      docId: docId.Value,
+      expiry: expiry.Value
+    };
+  },
+  getGetAndTouchCommandPayload(inputOptions) {
+    let docId = _.findWhere(inputOptions, { Name: "docId" });
+    let expiry = _.findWhere(inputOptions, { Name: "expiry" });
+    return {
+      docId: docId.Value,
+      expiry: expiry.Value
     };
   },
   getInsertCommandPayload(inputOptions) {
@@ -113,33 +128,26 @@ export default {
       resultType: resultType.Value
     };
   },
-  /*getMutateInCommandPayload(inputOptions) {
-      return {
-        docIdmutatein: commandText.DocIds,
-        pathMutatein: commandText.Option1,
-        doc: commandText.Option2
-      };
-    },
-    getTouchCommandPayload(inputOptions) {
-      return {
-        docIdtouch: commandText.DocIds,
-        expiry: commandText.Option1
-      };
-    },
-    getGetAndTouchCommandPayload(inputOptions) {
-      return {
-        docIdgetAndTouch: commandText.DocIds,
-        expiry: commandText.Option1
-      };
-    },*/
-  getFTSCommandPayload(inputOptions) {
-    let ftsMatch = _.findWhere(inputOptions, { Name: "ftsSearchTerm" });
-    let ftsField = _.findWhere(inputOptions, { Name: "ftsDescription" });
-    let ftsIndexToUse = _.findWhere(inputOptions, { Name: "ftsIndex" });
+  getMutateInCommandPayload(inputOptions) {
+    //TODO:  add persistTo, replicateTo options
+    let docId = _.findWhere(inputOptions, { Name: "docId" });
+    let path = _.findWhere(inputOptions, { Name: "path" });
+    let value = _.findWhere(inputOptions, { Name: "value" });
+    let resultType = _.findWhere(inputOptions, { Name: "resultType" });
     return {
-      ftsMatch: ftsMatch.Value,
-      ftsField: ftsField.Value,
-      ftsIndexToUse: ftsIndexToUse.Value
+      docId: docId.Value,
+      path: path.Value,
+      value: value.Value,
+      resultType: resultType.Value
+    };
+  },
+  getFTSCommandPayload(inputOptions) {
+    let ftsMatch = _.findWhere(inputOptions, { Name: "searchTerm" });
+    //let index = _.findWhere(inputOptions, { Name: "index" });
+    let fuzziness = _.findWhere(inputOptions, { Name: "fuzziness" });
+    return {
+      term: ftsMatch.Value,
+      fuzziness: fuzziness.Value
     };
   },
   getACIDCommandPayload(inputOptions) {

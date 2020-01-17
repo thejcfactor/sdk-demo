@@ -80,6 +80,24 @@ public class SdkDemoService {
         return Result.of(documents, docIds);
     }
 
+    public Result<Map<String, Object>> getReplica(String docId){
+        Map<String, Object> document = repository.getReplica(docId);
+
+        return Result.of(document, docId);
+    }
+
+    public Result<Boolean> touch(String docId, Integer expiry){
+        Boolean success = repository.touch(docId, expiry);
+
+        return Result.of(success, docId);
+    }
+
+    public Result<Map<String, Object>> getAndTouch(String docId, Integer expiry){
+        Map<String, Object> document = repository.getAndTouch(docId, expiry);
+
+        return Result.of(document, docId);
+    }
+
     public Result<Map<String, Object>> upsert(String docId, String doc){
 
         Map<String, Object> document = repository.upsert(docId, doc);
@@ -113,6 +131,20 @@ public class SdkDemoService {
         Map<String, Object> result = repository.lookupIn(docId, path, resultType);
 
         return Result.of(result, docId);
+    }
+
+    public Result<Map<String, Object>> mutateIn(String docId, String path, String value, String resultType){
+
+        Map<String, Object> result = repository.mutateIn(docId, path, value, resultType);
+
+        return Result.of(result, docId);
+    }
+
+    public Result<List<Map<String, List<String>>>> fts(String searchTerm, String indexName, Integer fuzzyLevel){
+
+        List<Map<String, List<String>>> result = repository.fts(searchTerm, indexName, fuzzyLevel);
+
+        return Result.of(result, searchTerm);
     }
 
     public Result<List<Map<String, Object>>> executeTransaction(String doc1Id, String doc1, String doc2Id, String doc2, Boolean rollback){

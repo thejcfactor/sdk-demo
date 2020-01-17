@@ -19,11 +19,16 @@ app.post("/api/node26/connect", SdkController.connect);
 app.post("/api/node26/n1qlQuery", SdkController.n1qlQuery);
 app.post("/api/node26/get", SdkController.get);
 app.post("/api/node26/getMulti", SdkController.getMulti);
+app.post("/api/node26/getReplica", SdkController.getReplica);
+app.post("/api/node26/touch", SdkController.touch);
+app.post("/api/node26/getAndTouch", SdkController.getAndTouch);
 app.post("/api/node26/upsert", SdkController.upsert);
 app.post("/api/node26/insert", SdkController.insert);
 app.post("/api/node26/replace", SdkController.replace);
 app.post("/api/node26/remove", SdkController.remove);
 app.post("/api/node26/lookupIn", SdkController.lookupIn);
+app.post("/api/node26/mutateIn", SdkController.mutateIn);
+app.post("/api/node26/fts", SdkController.fts);
 
 if(typeof port == "undefined"){
     port = 8003;

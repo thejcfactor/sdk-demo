@@ -5,19 +5,22 @@ import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.json.JsonObject;
 import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
+import com.couchbase.client.core.message.kv.subdoc.multi.Mutation;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.query.N1qlQuery;
 import com.couchbase.client.java.query.N1qlQueryResult;
 import com.couchbase.client.java.query.N1qlQueryRow;
 import com.couchbase.client.java.subdoc.DocumentFragment;
+/*FTS*/
+import com.couchbase.client.java.search.*;
+import com.couchbase.client.java.search.queries.*;
+import com.couchbase.client.java.search.result.SearchQueryResult;
+import com.couchbase.client.java.search.result.SearchQueryRow;
 
 import rx.Observable;
 import rx.functions.Func1;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 import org.springframework.dao.DataRetrievalFailureException;
 
@@ -46,14 +49,15 @@ public final class SdkDemoRepository {
         return INSTANCE;
     }
 
-    public Boolean Connect(String host, String bucketName, String user, String password) throws Exception {
+    public Boolean Connect(String host, String bucketName, String user, String password) 
+        throws Exception {
 
         this.host = host;
         this.bucketName = bucketName;
         this.username = user;
         this.password = password;
 
-        if(this.connected){
+        if (this.connected) {
             this.Disconnect();
         }
 
@@ -149,6 +153,37 @@ public final class SdkDemoRepository {
         return results;
     }
 
+    public Map<String, Object> getReplica(String docId){
+
+        Iterator<JsonDocument> docs = bucket.getFromReplica(docId);
+        
+        if(docs.hasNext()){
+            JsonDocument doc = docs.next();
+
+            return new HashMap<String, Object>(){{
+                put(doc.id(), doc.content().toMap());
+            }};
+        }
+
+        return new HashMap<String, Object>(){{}};
+    }
+
+    public Boolean touch(String docId, Integer expiry){
+        
+        Boolean success = this.bucket.touch(docId, expiry);
+        
+        return success;
+    }
+
+    public Map<String, Object> getAndTouch(String docId, Integer expiry){
+        
+        JsonDocument doc = bucket.getAndTouch(docId, expiry);
+        
+        return new HashMap<String, Object>(){{
+            put(doc.id(), doc.content().toMap());
+        }};
+    }
+
     public Map<String, Object> upsert(String docId, String doc){
         JsonObject content = JsonObject.fromJson(doc);
         JsonDocument newDoc = JsonDocument.create(docId, content);
@@ -156,7 +191,7 @@ public final class SdkDemoRepository {
         JsonDocument savedDoc = bucket.upsert(newDoc);
 
         return new HashMap<String, Object>(){{
-            put(savedDoc.id(), savedDoc.content());
+            put(savedDoc.id(), savedDoc.content().toMap());
         }};
     }
 
@@ -167,7 +202,7 @@ public final class SdkDemoRepository {
         JsonDocument savedDoc = bucket.insert(newDoc);
 
         return new HashMap<String, Object>(){{
-            put(savedDoc.id(), savedDoc.content());
+            put(savedDoc.id(), savedDoc.content().toMap());
         }};
     }
 
@@ -178,7 +213,7 @@ public final class SdkDemoRepository {
         JsonDocument savedDoc = bucket.replace(newDoc);
 
         return new HashMap<String, Object>(){{
-            put(savedDoc.id(), savedDoc.content());
+            put(savedDoc.id(), savedDoc.content().toMap());
         }};
     }
 
@@ -211,5 +246,53 @@ public final class SdkDemoRepository {
                 put(path, array);
             }};
         }
+    }
+
+    public Map<String, Object> mutateIn(String docId, String path, String value, String resultType){
+        DocumentFragment<Mutation> result = bucket.mutateIn(docId).upsert(path, value).execute();
+
+        if(resultType.equalsIgnoreCase("primitive")){
+            Object obj = result.content(0);
+            return new HashMap<String, Object>(){{
+                put(path, obj);
+            }};
+        }
+        else if(resultType.equalsIgnoreCase("object")){
+            JsonObject obj = result.content(0, JsonObject.class);
+            return new HashMap<String, Object>(){{
+                put(path, obj.toMap());
+            }};
+        }else{
+            //TODO: array
+            JsonArray array = result.content(0, JsonArray.class);
+
+            return new HashMap<String, Object>(){{
+                put(path, array);
+            }};
+        }
+
+    }
+
+    public  List<Map<String, Object>> fts(String searchTerm, String indexName, Integer fuzzyLevel){
+        if(indexName.isEmpty()){
+            indexName = "beer-search";
+        }
+
+        MatchQuery query = SearchQuery.match(searchTerm).fuzziness(fuzzyLevel);
+
+        SearchQueryResult result = bucket.query(new SearchQuery(indexName, query)
+            .limit(10)
+            .highlight());
+
+        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+        for (SearchQueryRow row : result.hits()) {
+            
+            data.add(new HashMap<String, Object>(){{
+                put("id", row.id());
+                put("hits", row.fragments());
+            }});
+        }
+
+        return data;
     }
 }

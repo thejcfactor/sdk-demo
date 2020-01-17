@@ -6,6 +6,7 @@ from couchbase.n1ql import N1QLQuery
 from couchbase.bucket import Bucket
 from couchbase.exceptions import CouchbaseError
 import couchbase.subdocument as sd
+import couchbase.fulltext as fts
 
 class SdkDemoRepository(object):
 
@@ -57,7 +58,7 @@ class SdkDemoRepository(object):
 
         return ids
 
-    def n1qlQuery(self, query):
+    def n1ql_query(self, query):
 
         n1ql = N1QLQuery(query)
 
@@ -67,83 +68,148 @@ class SdkDemoRepository(object):
 
         return results
 
-    def get(self, docId):
+    def get(self, doc_id):
 
         try:
-            result = self.bucket.get(docId)
+            result = self.bucket.get(doc_id)
             if result.success:
                 return result.value
             return None
         except Exception as error:
-            print('Error performing KV get for docId: {0}. Error: {1}'.format(docId, error))
+            print('Error performing KV get for docId: {0}. Error: {1}'.format(doc_id, error))
             raise
 
-    def getMulti(self, docIds):
+    def get_multi(self, doc_ids):
 
         try:
             results = []
-            for key, result in self.bucket.get_multi(docIds):
+            for key, result in self.bucket.get_multi(doc_ids):
                 results.append({
                     'id': key,
                     'document': result.value
                 })
             return results
         except Exception as error:
-            print('Error performing KV getMulti for docIds: {0}. Error: {1}'.format(docIds, error))
+            print('Error performing KV getMulti for docIds: {0}. Error: {1}'.format(doc_ids, error))
             raise
 
-    def upsert(self, docId, docValue, options=None):
+    def get_replica(self, doc_id):
 
         try:
-            result = self.bucket.upsert(docId, docValue)
-            if result:
-                return self.get(docId)
+            result = self.bucket.get(doc_id, replica=True)
+            if result.success:
+                return result.value
             return None
         except Exception as error:
-            print('Error performing KV upsert for docId: {0}. Error: {1}'.format(docId, error))
+            print('Error performing KV getReplica for docId: {0}. Error: {1}'.format(doc_id, error))
             raise
 
-    def insert(self, docId, docValue, options=None):
-
+    def touch(self, doc_id, expiry):
         try:
-            result = self.bucket.insert(docId, docValue)
-            if result:
-                return self.get(docId)
+            result = self.bucket.touch(doc_id, ttl=expiry)
+            if result.success:
+                return result.value
+
             return None
         except Exception as error:
-            print('Error performing KV insert for docId: {0}. Error: {1}'.format(docId, error))
+            print('Error performing KV touch for docId: {0}. Error: {1}'.format(doc_id, error))
             raise
 
-    def replace(self, docId, docValue, options=None):
+    def get_and_touch(self, doc_id, expiry):
 
         try:
-            result = self.bucket.replace(docId, docValue)
-            if result:
-                return self.get(docId)
+            result = self.bucket.get(doc_id, ttl=expiry)
+            if result.success:
+                return result.value
             return None
         except Exception as error:
-            print('Error performing KV replace for docId: {0}. Error: {1}'.format(docId, error))
+            print('Error performing KV getAndTouch for docId: {0}. Error: {1}'.format(doc_id, error))
             raise
 
-    def remove(self, docId):
+    def upsert(self, doc_id, doc_value, options=None):
 
         try:
-            self.bucket.remove(docId)
-            return docId
+            result = self.bucket.upsert(doc_id, doc_value)
+            if result:
+                return self.get(doc_id)
+            return None
         except Exception as error:
-            print('Error performing KV remove for docId: {0}. Error: {1}'.format(docId, error))
+            print('Error performing KV upsert for docId: {0}. Error: {1}'.format(doc_id, error))
             raise
 
-    def lookupIn(self, docId, path):
+    def insert(self, doc_id, doc_value, options=None):
 
         try:
-            result = self.bucket.lookup_in(docId, sd.get(path))
+            result = self.bucket.insert(doc_id, doc_value)
+            if result:
+                return self.get(doc_id)
+            return None
+        except Exception as error:
+            print('Error performing KV insert for docId: {0}. Error: {1}'.format(doc_id, error))
+            raise
+
+    def replace(self, doc_id, doc_value, options=None):
+
+        try:
+            result = self.bucket.replace(doc_id, doc_value)
+            if result:
+                return self.get(doc_id)
+            return None
+        except Exception as error:
+            print('Error performing KV replace for docId: {0}. Error: {1}'.format(doc_id, error))
+            raise
+
+    def remove(self, doc_id):
+
+        try:
+            self.bucket.remove(doc_id)
+            return doc_id
+        except Exception as error:
+            print('Error performing KV remove for docId: {0}. Error: {1}'.format(doc_id, error))
+            raise
+
+    def lookup_in(self, doc_id, path):
+
+        try:
+            result = self.bucket.lookup_in(doc_id, sd.get(path))
             if result:
                 return result[0]
             return None
         except Exception as error:
-            print('Error performing KV lookupIn for docId: {0} & path: {1}. Error: {2}'.format(docId, path, error))
+            print('Error performing KV lookupIn for docId: {0} & path: {1}. Error: {2}'.format(doc_id, path, error))
             raise
+
+    def mutate_in(self, doc_id, path, value):
+
+        try:
+            result = self.bucket.mutate_in(doc_id, sd.upsert(path, value))
+            if result:
+                response =  self.lookup_in(doc_id, path)
+                return response
+            return None
+        except Exception as error:
+            print('Error performing KV mutateIn for docId: {0} & path: {1}. Error: {2}'.format(doc_id, path, error))
+            raise
+
+    def fts(self, term, index_name, fuzziness):
+        if not index_name:
+            index_name = 'beer-search'
+
+        try:
+
+            results = self.bucket.search(index_name, fts.TermQuery(term, fuzziness=0), limit=10, highlight_style='html')
+            response = []
+            for result in results:
+                response.append({
+                    'id': result['id'],
+                    'hit': result['locations']
+                })
+            return response
+        except Exception as error:
+            print('Error performing FTS. Error: {0}'.format(error))
+            raise
+        
+
 
         
 
