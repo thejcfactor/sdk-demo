@@ -12,7 +12,7 @@ class SdkDemoRepository(object):
 
     def __init__(self):
         self.host = ''
-        self.bucketName = ''
+        self.bucket_name = ''
         self.username = ''
         self.password = ''
         self.sampleIds = []
@@ -24,7 +24,7 @@ class SdkDemoRepository(object):
 
     def connect(self, host, bucket, username, password):
         self.host = host
-        self.bucketName = bucket
+        self.bucket_name = bucket
         self.username = username
         self.password = password
 
@@ -35,18 +35,18 @@ class SdkDemoRepository(object):
             authenticator = PasswordAuthenticator(self.username, self.password)
             self.cluster.authenticate(authenticator)
 
-            self.bucket = self.cluster.open_bucket(self.bucketName)
+            self.bucket = self.cluster.open_bucket(self.bucket_name)
         except Exception as error:
-            print('Could not open bucket: {0}.  Error: {1}'.format(self.bucketName, error))
+            print('Could not open bucket: {0}.  Error: {1}'.format(self.bucket_name, error))
             raise
 
         self.connected = True
         return self.connected
 
     def get_sample_doc_ids(self):
-        bucket = self.bucketName
+        bucket = self.bucket_name
         if('-' in bucket):
-            bucket = '`' + self.bucketName + '`'
+            bucket = '`' + self.bucket_name + '`'
 
         query = 'SELECT meta().id FROM {0} LIMIT 5;'.format(bucket)
 
@@ -58,9 +58,15 @@ class SdkDemoRepository(object):
 
         return ids
 
-    def n1ql_query(self, query):
+    def n1ql_query(self, query, prepare=False, parameters=None):
 
         n1ql = N1QLQuery(query)
+
+        if parameters and len(parameters) > 0:
+            n1ql = N1QLQuery(query, *parameters)
+
+        if prepare:
+            n1ql.adhoc = False
 
         results = []
         for row in self.bucket.n1ql_query(n1ql):
@@ -193,11 +199,11 @@ class SdkDemoRepository(object):
 
     def fts(self, term, index_name, fuzziness):
         if not index_name:
-            index_name = 'beer-search'
+            index_name = 'default'
 
         try:
-
-            results = self.bucket.search(index_name, fts.TermQuery(term, fuzziness=0), limit=10, highlight_style='html')
+            query = fts.TermQuery(term, fuzziness=fuzziness) if fuzziness else fts.TermQuery(term)
+            results = self.bucket.search(index_name, query, limit=10, highlight_style='html')
             response = []
             for result in results:
                 response.append({

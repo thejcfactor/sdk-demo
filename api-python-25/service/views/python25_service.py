@@ -64,9 +64,11 @@ def n1ql_query():
         return jsonify(response), 500
 
     query = request_args['query']
+    prepare = request_args['usePrepared'] if 'usePrepared' in request_args else None
+    params = request_args['queryParams'] if 'queryParams' in request_args else None
 
     try:
-        results = repository.n1ql_query(query)
+        results = repository.n1ql_query(query, prepare, params)
         response['message'] = 'Executed N1QL query.'
         response['data'] = results
         return jsonify(response)
@@ -312,10 +314,8 @@ def fts():
         return jsonify(response), 500
 
     term = request_args['term']
-    #TODO:
-    #index = request_args['index']
-    index = None
-    fuzziness = request_args['fuzziness']
+    index = request_args['index'] if request_args['index'] != '' else None
+    fuzziness = try_parse_int(request_args['fuzziness'], None)
 
     try:
         results = repository.fts(term, index, fuzziness)
@@ -336,6 +336,16 @@ def isParentHostMac():
     parent_is_mac = env_var.lower() == 'true'
 
     return parent_is_mac
+
+def try_parse_int(val, default):
+    return_val = default
+    try:
+        if val and val != '':
+            return_val = int(val)
+    except ValueError:
+        return default
+
+    return return_val
 
 
 

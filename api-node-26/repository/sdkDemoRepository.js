@@ -26,7 +26,10 @@ class SdkRepository {
     this.cluster.authenticate(this.username, this.password);
 
     let self = this;
-    this.bucket = this.cluster.openBucket(this.bucketName, function(err, result) {
+    this.bucket = this.cluster.openBucket(this.bucketName, function(
+      err,
+      result
+    ) {
       if (err) {
         self.connected = false;
       } else {
@@ -58,37 +61,42 @@ class SdkRepository {
     });
   }
 
-  n1qlQuery(query, callback){
+  n1qlQuery(query, prepare, parameters, callback) {
     let n1qlQuery = N1qlQuery.fromString(query);
-    this.bucket.query(n1qlQuery, function(err,rows){
+
+    if (prepare != null && prepare) {
+      n1qlQuery.adhoc(true);
+    }
+
+    this.bucket.query(n1qlQuery, parameters, function(err, rows) {
       let results = [];
-      if(!err){
-        for(var row in rows){
-          results.push(rows[row])
+      if (!err) {
+        for (var row in rows) {
+          results.push(rows[row]);
         }
       }
       callback(err, results);
     });
   }
 
-  get(docId, callback){
-    this.bucket.get(docId, function(err, doc){
+  get(docId, callback) {
+    this.bucket.get(docId, function(err, doc) {
       let document = null;
-      if(!err){
+      if (!err) {
         document = doc;
       }
       callback(err, document);
     });
   }
 
-  getMulti(docIds, callback){
-    let results = []
-    this.bucket.getMulti(docIds, function(err, docs){
-      if(!err){
+  getMulti(docIds, callback) {
+    let results = [];
+    this.bucket.getMulti(docIds, function(err, docs) {
+      if (!err) {
         for (var key in docs) {
-          if (docs[key].error){
+          if (docs[key].error) {
             continue;
-          } 
+          }
           results.push(docs[key]);
         }
       }
@@ -96,124 +104,129 @@ class SdkRepository {
     });
   }
 
-  getReplica(docId, callback){
-    this.bucket.getReplica(docId, function(err, doc){
+  getReplica(docId, callback) {
+    this.bucket.getReplica(docId, function(err, doc) {
       let document = null;
-      if(!err){
+      if (!err) {
         document = doc;
       }
       callback(err, document);
     });
   }
 
-  touch(docId, expiry, callback){
-    this.bucket.touch(docId, expiry, function(err, result){
+  touch(docId, expiry, callback) {
+    this.bucket.touch(docId, expiry, function(err, result) {
       callback(err, result);
     });
   }
 
-  getAndTouch(docId, expiry, callback){
-    this.bucket.getAndTouch(docId, expiry, function(err, doc){
+  getAndTouch(docId, expiry, callback) {
+    this.bucket.getAndTouch(docId, expiry, function(err, doc) {
       let document = null;
-      if(!err){
+      if (!err) {
         document = doc;
       }
       callback(err, document);
     });
   }
 
-  upsert(docId, docValue, options, callback){
+  upsert(docId, docValue, options, callback) {
     let self = this;
-    this.bucket.upsert(docId, docValue, options, function(err, result){
-      if(!err){
+    this.bucket.upsert(docId, docValue, options, function(err, result) {
+      if (!err) {
         self.get(docId, callback);
-      }
-      else{
-        callback(err, result);
-      }      
-    });
-  }
-
-  insert(docId, docValue, options, callback){
-    let self = this;
-    this.bucket.insert(docId, docValue, options, function(err, result){
-      if(!err){
-        self.get(docId, callback);
-      }
-      else{
+      } else {
         callback(err, result);
       }
     });
   }
 
-  replace(docId, docValue, options, callback){
+  insert(docId, docValue, options, callback) {
     let self = this;
-    this.bucket.replace(docId, docValue, options, function(err, result){
-      if(!err){
+    this.bucket.insert(docId, docValue, options, function(err, result) {
+      if (!err) {
         self.get(docId, callback);
-      }
-      else{
+      } else {
         callback(err, result);
       }
     });
   }
 
-  remove(docId, callback){
-    this.bucket.remove(docId, function(err, result){
-      if(!err){
+  replace(docId, docValue, options, callback) {
+    let self = this;
+    this.bucket.replace(docId, docValue, options, function(err, result) {
+      if (!err) {
+        self.get(docId, callback);
+      } else {
+        callback(err, result);
+      }
+    });
+  }
+
+  remove(docId, callback) {
+    this.bucket.remove(docId, function(err, result) {
+      if (!err) {
         callback(err, docId);
-      }
-      else{
+      } else {
         callback(err, result);
       }
     });
   }
 
-  lookupIn(docId, path, callback){
-    this.bucket.lookupIn(docId)
-      .get(path).execute(function(err, result){
+  lookupIn(docId, path, callback) {
+    this.bucket
+      .lookupIn(docId)
+      .get(path)
+      .execute(function(err, result) {
         let subDoc = null;
-        if(!err){
+        if (!err) {
           subDoc = {
             path: path,
             result: result.content(path)
           };
         }
         callback(err, subDoc);
-    });
-    
+      });
   }
 
-  mutateIn(docId, path, value, callback){
-    this.bucket.mutateIn(docId)
-      .upsert(path, value).execute(function(err, result){
+  mutateIn(docId, path, value, callback) {
+    this.bucket
+      .mutateIn(docId)
+      .upsert(path, value)
+      .execute(function(err, result) {
         let subDoc = null;
-        if(!err){
-          //console.log(result);
+        if (!err) {
           subDoc = {
             path: path,
             success: result.content(path) ? true : false
           };
         }
         callback(err, subDoc);
-    });
+      });
   }
 
-  fts(term, indexName, fuzziness, callback){
-    if(indexName == null){
-      indexName = "beer-search";
+  fts(term, indexName, fuzziness, callback) {
+    if (indexName == null || indexName === "") {
+      indexName = "default";
     }
 
-    let match = searchQuery.term(term).fuzziness(fuzziness);
-    let query = searchQuery.new(indexName, match).limit(10).highlight();
+    let match =
+      fuzziness != null
+        ? searchQuery.term(term).fuzziness(fuzziness)
+        : searchQuery.term(term);
 
-    this.bucket.query(query, function(err, res, meta){
+    let query = searchQuery
+      .new(indexName, match)
+      .limit(10)
+      .highlight();
+
+    this.bucket.query(query, function(err, res, meta) {
       let results = [];
-      if(!err){
-        for(let i = 0; i < res.length; i++){
+      if (!err) {
+        for (let i = 0; i < res.length; i++) {
           results.push({
-            "id": res[i].id,
-            "hit": res[i].locations
+            id: res[i].id,
+            hit: res[i].locations
           });
         }
       }

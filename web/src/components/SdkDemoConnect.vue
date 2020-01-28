@@ -170,7 +170,25 @@
           <b-col cols="6" offset="1">
             <b-card no-body align="left">
               <b-card-text>
-                <div class="connect-details-title">
+                <div class="sdk-accordian-tabs">
+                  <div class="sdk-accordian-tab">
+                    <input type="checkbox" id="chbx1" />
+                    <label class="sdk-accordian-label" for="chbx1"
+                      >What's all this for?</label
+                    >
+                    <div class="sdk-accordian-content">
+                      <div class="sdk-notes-div">
+                        The information here (host, bucket, username and
+                        password) is needed in order to connect to a Couchbase
+                        cluster. The defaults can be applied (click the "Apply
+                        Defaults" button on the right), or you can look at the
+                        information icon for each option to see more details
+                        about the option.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!--<div class="connect-details-title">
                   What's all this for?
                 </div>
                 <hr class="divider" />
@@ -180,7 +198,7 @@
                   defaults can be applied (click the "Apply Defaults" button on
                   the right), or you can look at the information icon for each
                   option to see more details about the option.
-                </div>
+                </div>-->
               </b-card-text>
             </b-card>
           </b-col>
@@ -245,19 +263,6 @@ export default {
   },
   created: function() {
     this.reset(false);
-    let connectCommand = {
-      Name: "connect",
-      Label: "Connect"
-    };
-
-    let availConnectCommand = {
-      Name: "connect",
-      Label: "Connect",
-      Selected: false
-    };
-
-    this.addOrSetViewedCommand(connectCommand);
-    this.addAvailableOutputCommand(availConnectCommand);
   },
   methods: {
     onHelpClick: function(type) {
@@ -317,6 +322,20 @@ export default {
         } else {
           self.showAlertFailure = true;
         }
+
+        let connectCommand = {
+          Name: "connect",
+          Label: "Connect"
+        };
+
+        let availConnectCommand = {
+          Name: "connect",
+          Label: "Connect",
+          Selected: false
+        };
+
+        self.addOrSetViewedCommand(connectCommand);
+        self.addAvailableOutputCommand(availConnectCommand);
       });
     },
     onCodeClick: function() {
@@ -442,5 +461,74 @@ export default {
   font-size: 0.9em;
   padding-left: 5px;
   overflow-y: auto;
+}
+
+/* sdk-accordian styles*/
+
+.sdk-accordian-tabs {
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.25rem;
+}
+
+.sdk-accordian-tab {
+  width: 100%;
+  color: #000;
+  overflow: hidden;
+}
+
+.sdk-accordian-tab input {
+  position: absolute;
+  opacity: 0;
+  z-index: -1;
+}
+
+.sdk-accordian-label {
+  display: flex;
+  /* if using ::before for caret, dont use*/
+  justify-content: space-between;
+  font-size: 1rem;
+  padding: 0.1em;
+  background: transparent;
+  cursor: pointer;
+  margin-bottom: 0px;
+}
+
+.sdk-accordian-label:hover {
+  color: #0000ee;
+}
+
+.sdk-accordian-label::after {
+  content: "\276F";
+  width: 1em;
+  height: 1em;
+  text-align: center;
+  transition: all 0.35s;
+}
+
+.sdk-accordian-content {
+  max-height: 0;
+  padding: 0 1em;
+  color: #000;
+  background: white;
+  transition: all 0.35s;
+}
+
+.sdk-accordian-tab input:checked + .sdk-accordian-label {
+  background: transparent;
+}
+
+.sdk-accordian-tab input:checked + .sdk-accordian-label:hover {
+  background: transparent;
+  color: #0000ee;
+}
+
+.sdk-accordian-tab input:checked + .sdk-accordian-label::after {
+  transform: rotate(90deg);
+}
+
+.sdk-accordian-tab input:checked ~ .sdk-accordian-content {
+  max-height: 100vh;
+  padding: 0.5em 0.5em;
 }
 </style>

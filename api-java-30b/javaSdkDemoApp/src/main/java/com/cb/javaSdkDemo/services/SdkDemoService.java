@@ -2,6 +2,7 @@ package com.cb.javaSdkDemo.services;
 
 import com.cb.javaSdkDemo.entities.Result;
 import com.cb.javaSdkDemo.repository.SdkDemoRepository;
+import com.couchbase.client.java.json.JsonArray;
 
 import java.util.List;
 import java.util.Map;
@@ -59,11 +60,61 @@ public class SdkDemoService {
         return repository.bucketName();
     }
 
-    public Result<List<Map<String, Object>>> n1qlQuery(String query) {
+    public Result<List<Map<String, Object>>> n1qlQuery(String query, Boolean prepared, String params) {
+        /* TODO:  Is there an easier way?? */
 
-        List<Map<String, Object>> result = repository.n1qlQuery(query);
+        String scrubbedParams = params.replace("[", "").replace("]", "").replace("\"", "");
+        List<String> strParams = Arrays.asList(scrubbedParams.split(","));
+        JsonArray array = JsonArray.create();
+        for (String str : strParams) {
+            if(str.equals("")){
+                continue;
+            }
+            else if(tryParseBoolean(str)){
+                array.add(Boolean.parseBoolean(str));
+            }
+            else if(tryParseInt(str)){
+                array.add(Integer.parseInt(str));
+            }
+            else if(tryParseFloat(str)){
+                array.add(Float.parseFloat(str));
+            }
+            else{
+                array.add(str);
+            }
+        }
+        List<Map<String, Object>> result = repository.n1qlQuery(query, prepared, array);
 
         return Result.of(result, query.toString());
+    }
+
+    public Boolean tryParseInt(String val){
+        try{
+            Integer.parseInt(val);
+            return true;
+        }
+        catch (NumberFormatException ex){
+            return false;
+        }
+    }
+
+    public Boolean tryParseFloat(String val){
+        try{
+            Float.parseFloat(val);
+            return true;
+        }
+        catch (NumberFormatException ex){
+            return false;
+        }
+    }
+
+    public Boolean tryParseBoolean(String val){
+        try{
+            return Boolean.parseBoolean(val);
+        }
+        catch (NumberFormatException ex){
+            return false;
+        }
     }
 
     public Result<Map<String, Object>> get(String docId){
@@ -133,16 +184,16 @@ public class SdkDemoService {
         return Result.of(result, docId);
     }
 
-    public Result<Map<String, Object>> mutateIn(String docId, String path, String value, String resultType){
+    public Result<Map<String, Object>> mutateIn(String docId, String path, Object value, String resultType){
 
         Map<String, Object> result = repository.mutateIn(docId, path, value, resultType);
 
         return Result.of(result, docId);
     }
 
-    public Result<List<Map<String, List<String>>>> fts(String searchTerm, String indexName, Integer fuzzyLevel){
+    public Result<List<Map<String, Object>>> fts(String searchTerm, String indexName, Integer fuzzyLevel){
 
-        List<Map<String, List<String>>> result = repository.fts(searchTerm, indexName, fuzzyLevel);
+        List<Map<String, Object>> result = repository.fts(searchTerm, indexName, fuzzyLevel);
 
         return Result.of(result, searchTerm);
     }

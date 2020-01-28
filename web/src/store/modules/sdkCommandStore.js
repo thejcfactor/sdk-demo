@@ -310,25 +310,23 @@ export const state = {
           Hint: "hops",
           Value: ""
         },
-        /*
-        TODO:  index selection?
-        {
-          Name: "ftsDescription",
-          Label: "Enter attribute below:",
-          InputType: "INPUT",
-          //TODO:  configure a default
-          Hint: "description",
-          Value: ""
-        },*/
         {
           Name: "fuzziness",
           Label: "Enter FTS fuzziness below:",
           InputType: "INPUT",
           Hint: "2",
           Value: ""
+        },
+        {
+          Name: "index",
+          Label: "Enter FTS search index below:",
+          InputType: "INPUT",
+          Hint: "default",
+          Value: ""
         }
       ],
       Info: `Enter a search term (i.e. hops, bitter, full-bodied, etc.) and fuzziness into the provided input fields.\n
+      Enter an FTS search index.  
       Click the "Run" button to retrieve full text search results.`
     }
   ],
@@ -476,7 +474,7 @@ export const mutations = {
 };
 
 export const actions = {
-  reset({ commit, dispatch, rootState }, init) {
+  reset({ commit, rootState }, init) {
     commit("CLEAR_SDK_COMMAND");
     commit("REMOVE_ALL_AVAILABLE_COMMANDS_FROM_AVAILABLE_OUTPUT");
     commit("REMOVE_ALL_OUTPUT_COMMANDS");
@@ -484,7 +482,7 @@ export const actions = {
     commit("CLEAR_VIEWED_COMMAND");
     commit("CLEAR_RESULTS");
     if (init) {
-      let connectCommand = {
+      /*let connectCommand = {
         Name: "connect",
         Label: "Connect"
       };
@@ -496,7 +494,7 @@ export const actions = {
       };
 
       dispatch("addOrSetViewedCommand", connectCommand);
-      dispatch("addAvailableOutputCommand", availConnectCommand);
+      dispatch("addAvailableOutputCommand", availConnectCommand);*/
     }
     commit("SET_DOCUMENTATION_URL", rootState.sdkStore.selectedLanguage);
   },

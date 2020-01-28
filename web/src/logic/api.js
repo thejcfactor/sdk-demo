@@ -1,8 +1,15 @@
 import axios from "axios";
 
+/*
+Java v2.7 - 8001
+Java v2.7 - 8002
+NodeJS v2.6 - 8003
+Python v2.5 - 8004/5000 - debug mode
+*/
+
 const apiClient = axios.create({
   baseURL: process.env.VUE_APP_API_URL,
-  //baseURL: "http://localhost:8004",
+  //baseURL: "http://localhost:8002",
   withCredentials: false,
   headers: {
     Accept: "application/json",

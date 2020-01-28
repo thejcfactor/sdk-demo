@@ -90,7 +90,9 @@ export default {
       this.$bvModal.show("choose-sample-code-download-modal");
     },
     handleSampleCodeSelection: function() {
-      let codeText = languageOptions.getSampleCode(this.sampleCodeOption);
+      let codeText = languageOptions.getCodeSnippet(this.sampleCodeOption, [
+        "all"
+      ]);
       let blob = new Blob([codeText], {
         type: "text/plain;charset=utf-8"
       });

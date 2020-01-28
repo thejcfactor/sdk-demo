@@ -175,7 +175,7 @@
                               class="cmd-option-hint"
                               v-if="option.Hint != ''"
                             >
-                              Hint: {{ parseCommandHint(option.Hint) }}
+                              Hint: {{ parseCommandHint(option.Hint, true) }}
                             </div>
                           </div>
                         </b-col>
@@ -194,23 +194,28 @@
                               :icon="icons.info"
                             ></font-awesome-icon>
                           </div>
-                          <b-button-group class="float-right">
-                            <b-button
-                              size="sm"
-                              variant="outline-secondary"
-                              v-on:click="onClearInputsClick"
-                              :disabled="!selectedCommand"
-                            >
-                              Clear Input
-                            </b-button>
-                            <b-button
-                              size="sm"
-                              variant="outline-secondary"
-                              v-on:click="onRunCommandClick"
-                              :disabled="!canRunCommand"
-                              >Execute Query</b-button
-                            >
-                          </b-button-group>
+                          <b-form inline class="float-right">
+                            <b-form-checkbox v-model="useN1qlPrepared">
+                              Prepare Query
+                            </b-form-checkbox>
+                            <b-button-group class="ml-2">
+                              <b-button
+                                size="sm"
+                                variant="outline-secondary"
+                                v-on:click="onClearInputsClick"
+                                :disabled="!selectedCommand"
+                              >
+                                Clear Input
+                              </b-button>
+                              <b-button
+                                size="sm"
+                                variant="outline-secondary"
+                                v-on:click="onRunCommandClick"
+                                :disabled="!canRunCommand"
+                                >Execute Query</b-button
+                              >
+                            </b-button-group>
+                          </b-form>
                         </b-col>
                       </b-row>
                       <b-row>
@@ -239,7 +244,26 @@
                               />
                             </div>
                             <div class="cmd-option-hint">
-                              Hint: {{ parseCommandHint(option.Hint) }}
+                              Hint: {{ parseCommandHint(option.Hint, true) }}
+                            </div>
+                            <div
+                              class="d-flex flex-column justify-content-start align-items-start"
+                              v-show="
+                                allowQueryParameters && useQueryParameters
+                              "
+                            >
+                              <div
+                                class="d-flex flex-row justify-content-start mb-1"
+                                v-for="(param, index) in queryParameters"
+                                :key="index"
+                              >
+                                <div class="cmd-option-title">
+                                  {{ param.Name }}:
+                                </div>
+                                <div class="cmd-option-input ml-2">
+                                  <input type="text" v-model="param.Value" />
+                                </div>
+                              </div>
                             </div>
                           </div>
                           <div
@@ -260,6 +284,14 @@
                                 @change="onSampleQueryChange"
                               ></b-form-select>
                             </b-form>
+                            <b-form-checkbox
+                              v-model="useQueryParameters"
+                              class="float-left"
+                              :disabled="!allowQueryParameters"
+                              v-on:change="onUseQueryParamsChange($event)"
+                            >
+                              Use Query Parameters
+                            </b-form-checkbox>
                           </div>
                         </b-col>
                       </b-row>
@@ -345,7 +377,7 @@
                               class="cmd-option-hint"
                               v-if="selectedCommand.Name == 'acid-beer-sample'"
                             >
-                              Hint: {{ parseCommandHint(option.Hint) }}
+                              Hint: {{ parseCommandHint(option.Hint, true) }}
                             </div>
                           </div>
                         </b-col>
@@ -404,10 +436,15 @@ export default {
       icons: {
         info: faInfoCircle
       },
+      randomHintIdx: 0,
       kvVisible: false,
       acidVisible: false,
       selectedSampleQuery: null,
       txnRollback: false,
+      useN1qlPrepared: false,
+      useQueryParameters: false,
+      allowQueryParameters: false,
+      queryParameters: [],
       nonKVCommands: ["n1ql", "fts"],
       acidCommands: ["acid", "acid-beer-sample"]
     };
@@ -444,13 +481,24 @@ export default {
       console.log(type);
       console.log(evt.target.value);
     },
-    parseCommandHint: function(hint) {
+    parseCommandHint: function(hint, reset) {
       //TODO:  handle possible case of multiple substitutions
       if (hint.includes("{{DOC_ID}}") && this.sampleDocIds != null) {
-        let numDocuments = this.sampleDocIds.length;
-        let rand = Math.floor(Math.random() * numDocuments);
-        let newHint = hint.replace("{{DOC_ID}}", this.sampleDocIds[rand]);
-        return newHint;
+        if (reset) {
+          let tempHint = hint.replace(
+            "{{DOC_ID}}",
+            this.sampleDocIds[this.randomHintIdx]
+          );
+          return tempHint;
+        } else {
+          let numDocuments = this.sampleDocIds.length;
+          this.randomHintIdx = Math.floor(Math.random() * numDocuments);
+          let newHint = hint.replace(
+            "{{DOC_ID}}",
+            this.sampleDocIds[this.randomHintIdx]
+          );
+          return newHint;
+        }
       }
       if (hint.includes("{{DOC_IDS}}") && this.sampleDocIds != null) {
         let docIds = this.sampleDocIds.slice(0, 3);
@@ -495,7 +543,8 @@ export default {
     onApplyHintsClick: function() {
       for (let i = 0; i < this.selectedCommand.InputOptions.length; i++) {
         let hint = this.parseCommandHint(
-          this.selectedCommand.InputOptions[i].Hint
+          this.selectedCommand.InputOptions[i].Hint,
+          false
         );
         this.selectedCommand.InputOptions[i].Value = hint;
       }
@@ -507,7 +556,32 @@ export default {
             this.connectedBucket,
             this.selectedSampleQuery
           );
-          this.selectedCommand.InputOptions[i].Value = query;
+          this.useQueryParameters = false;
+          this.queryParameters = [];
+          if (query.CanParameterize) {
+            this.allowQueryParameters = true;
+          } else {
+            this.allowQueryParameters = false;
+          }
+          this.selectedCommand.InputOptions[i].Value = query.Query;
+        }
+      }
+    },
+    onUseQueryParamsChange: function(value) {
+      for (let i = 0; i < this.selectedCommand.InputOptions.length; i++) {
+        if (this.selectedCommand.InputOptions[i].Name === "query") {
+          let query = bucketOptions.getSampleQuery(
+            this.connectedBucket,
+            this.selectedSampleQuery
+          );
+          if (value) {
+            this.selectedCommand.InputOptions[i].Value =
+              query.ParameterizedQuery;
+            this.queryParameters = [...query.QueryParameters];
+          } else {
+            this.selectedCommand.InputOptions[i].Value = query.Query;
+            this.queryParameters = [];
+          }
         }
       }
     },
@@ -531,6 +605,18 @@ export default {
         payload.inputOptions.push({
           Name: "rollback",
           Value: this.txnRollback
+        });
+      } else if (this.selectedCommand.Name.includes("n1ql")) {
+        payload.inputOptions.push({
+          Name: "usePrepared",
+          Value: this.useN1qlPrepared
+        });
+        let params = _.map(this.queryParameters, function(p) {
+          return p.Value;
+        });
+        payload.inputOptions.push({
+          Name: "queryParams",
+          Value: params
         });
       }
       this.runSdkCommand(payload);
@@ -565,6 +651,7 @@ export default {
         let sampleQueries = bucketOptions.getSampleQueries(
           this.connectedBucket
         );
+
         if (sampleQueries != null) {
           return sampleQueries;
         } else {
@@ -583,7 +670,7 @@ export default {
       return inputOptions;
     },
     hasAcidOperation: function() {
-      return this.selectedLanguage && this.selectedLanguage == "JAVA30b";
+      return this.selectedLanguage && this.selectedLanguage == "JAVA30";
     },
     showAcid: function() {
       let acidCommands = ["acid", "acid-beer-sample"];

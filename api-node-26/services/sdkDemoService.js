@@ -52,8 +52,8 @@ class SdkDemoService {
     }
   }
 
-  n1qlQuery(query, callback){
-      this.repository.n1qlQuery(query, callback);
+  n1qlQuery(query, prepare, parameters, callback){
+      this.repository.n1qlQuery(query, prepare, parameters, callback);
   }
 
   get(docId, callback){

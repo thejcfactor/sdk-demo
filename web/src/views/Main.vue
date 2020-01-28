@@ -15,7 +15,7 @@
     </b-row>
     <b-row align-h="center">
       <b-col cols="10" class="px-0">
-        <b-tabs card>
+        <b-tabs v-model="tabIndex" card>
           <b-tab class="p-2" title="Code">
             <Code></Code>
           </b-tab>
@@ -33,6 +33,7 @@ import SdkDemoConnect from "@/components/SdkDemoConnect";
 import SdkDemoPlay from "@/components/SdkDemoPlay";
 import Code from "@/components/Code";
 import Documentation from "@/components/Documentation";
+import { mapActions, mapState } from "vuex";
 
 export default {
   name: "Main",
@@ -44,6 +45,22 @@ export default {
   },
   data: function() {
     return {};
+  },
+  methods: {
+    ...mapActions("sdkStore", ["setTabIndex"])
+  },
+  computed: {
+    tabIndex: {
+      get: function() {
+        return this.storeTabIndex;
+      },
+      set: function(newValue) {
+        this.setTabIndex(newValue);
+      }
+    },
+    ...mapState({
+      storeTabIndex: state => state.sdkStore.codeOrDocTabIndex
+    })
   }
 };
 </script>

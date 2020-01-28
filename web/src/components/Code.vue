@@ -23,7 +23,11 @@
               <!--<b-img src="@/assets/images/nodejs/get.png"></b-img>-->
             </div>
             <div class="" v-else>
-              Under construction. Please view documentation for code.
+              Please view
+              <span class="span-as-link" v-on:click.stop="onNoCodeDocClick"
+                >documentation</span
+              >
+              for code reference.
             </div>
           </div>
         </b-card-text>
@@ -32,10 +36,28 @@
     <b-col cols="3" class="px-1">
       <b-card no-body>
         <b-card-text>
-          <div class="code-card-title">
-            Viewed Commands
-            <div class="info" v-on:click.stop="onHelpClick('viewed-cmds')">
-              <font-awesome-icon :icon="icons.info"></font-awesome-icon>
+          <div
+            class="d-flex flex-row justify-content-center align-items-center"
+          >
+            <div class="fake-element">Fake</div>
+            <div class="code-card-title">
+              Viewed Commands
+              <div class="info" v-on:click.stop="onHelpClick('viewed-cmds')">
+                <font-awesome-icon :icon="icons.info"></font-awesome-icon>
+              </div>
+            </div>
+            <div class="ml-auto download-btn-div">
+              <button
+                id="download-btn"
+                class="code-btn"
+                v-on:click="onDownloadCodeClick"
+                :disabled="!(viewedCommands.length > 0)"
+              >
+                <font-awesome-icon :icon="icons.Download"></font-awesome-icon>
+              </button>
+              <b-popover target="download-btn" placement="top" triggers="hover">
+                Download selected output commands.
+              </b-popover>
             </div>
           </div>
           <hr class="divider" />
@@ -182,8 +204,7 @@ export default {
       this.setViewedCommand(cmd);
     },
     onDownloadCodeClick: function() {
-      console.log("onDownloadCodeClick");
-      let commands = _.map(this.selectedOutputCommands, function(cmd) {
+      let commands = _.map(this.viewedCommands, function(cmd) {
         return cmd.Name;
       });
       let codeText = languageOptions.getCodeSnippet(
@@ -197,7 +218,16 @@ export default {
       if (this.selectedLanguage.includes("JAVA")) {
         outputName = "sampleCode.java";
       }
+      if (this.selectedLanguage.includes("NODE")) {
+        outputName = "sampleCode.js";
+      }
+      if (this.selectedLanguage.includes("PYTHON")) {
+        outputName = "sampleCode.py";
+      }
       saveAs(blob, outputName);
+    },
+    onNoCodeDocClick: function() {
+      this.setTabIndex(1);
     },
     onAvailCommandClick: function(cmd) {
       this.toggleAvailableOutputCommand(cmd);
@@ -261,9 +291,24 @@ export default {
       "toggleSelectedOutputCommand",
       "addSelectedOutputCommand",
       "removeSelectedOutputCommand"
-    ])
+    ]),
+    ...mapActions("sdkStore", ["setTabIndex"])
   },
   computed: {
+    commandNotes: function() {
+      if (this.sdkLanguage != null) {
+        let command = _.find(this.sdkLanguage.CommandList, function(cmd) {
+          return cmd.Name == "configuration";
+        });
+        if (command != null) {
+          let linkText = "here";
+          return (
+            "<a target='_blank' href='" + command.Url + "'>" + linkText + "<a>"
+          );
+        }
+      }
+      return "";
+    },
     ...mapState({
       selectedLanguage: state => state.sdkStore.selectedLanguage,
       currentViewedCommand: state => state.sdkCommandStore.currentViewedCommand,
@@ -271,7 +316,8 @@ export default {
       availableOutputCommands: state =>
         state.sdkCommandStore.availableOutputCommands,
       selectedOutputCommands: state =>
-        state.sdkCommandStore.selectedOutputCommands
+        state.sdkCommandStore.selectedOutputCommands,
+      documentationUrl: state => state.sdkCommandStore.currentDocumentationUrl
     }),
     ...mapGetters("sdkCommandStore", {
       selectedAvailableCommands: "selectedAvailableOutputCommands",
@@ -407,5 +453,11 @@ export default {
 .available-cmds-list > .available-cmd-list-item:first-child,
 .selected-cmds-list > .selected-cmd-list-item:first-child {
   border-top: none;
+}
+
+.span-as-link {
+  cursor: pointer;
+  color: blue;
+  /*text-decoration: underline;*/
 }
 </style>

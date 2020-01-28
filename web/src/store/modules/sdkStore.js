@@ -7,7 +7,7 @@ export const state = {
   languageOptions: [
     { value: null, text: "--Select SDK language--" },
     { value: "JAVA27", text: "Java v2.7" },
-    { value: "JAVA30b", text: "Java v3.0 BETA" },
+    { value: "JAVA30", text: "Java v3.0" },
     { value: "NODE26", text: "NodeJS v2.6" },
     { value: "PYTHON25", text: "Python v2.5" },
     { value: "DOTNET", text: ".NET" },
@@ -18,21 +18,28 @@ export const state = {
   sampleCodeOptions: [
     { value: null, text: "--Select SDK language--" },
     { value: "JAVA27", text: "Java v2.7" },
-    { value: "JAVA30b", text: "Java v3.0 BETA" },
+    { value: "JAVA30", text: "Java v3.0" },
     { value: "NODE26", text: "NodeJS v2.6" },
     { value: "PYTHON25", text: "Python v2.5" }
-  ]
+  ],
+  codeOrDocTabIndex: 0
 };
 
 export const mutations = {
   SET_SDK_LANGUAGE(state, language) {
     state.selectedLanguage = language;
+  },
+  SET_TAB_INDEX(state, tabIndex) {
+    state.codeOrDocTabIndex = tabIndex;
   }
 };
 
 export const actions = {
   setSdkLanguage({ commit }, language) {
     commit("SET_SDK_LANGUAGE", language);
+  },
+  setTabIndex({ commit }, tabIndex) {
+    commit("SET_TAB_INDEX", tabIndex);
   }
 };
 

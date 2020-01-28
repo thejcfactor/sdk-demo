@@ -20,7 +20,7 @@ import java.util.HashMap;
 
 @CrossOrigin(origins="*", allowedHeaders = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/java30b")
+@RequestMapping("/api/java30")
 public class SdkController {
 
     private final SdkDemoService service;
@@ -69,10 +69,14 @@ public class SdkController {
     }
 
     @RequestMapping(value="/n1qlQuery", method = RequestMethod.POST)
-    public ResponseEntity<? extends IResponse> n1qlQuery(@RequestBody Map<String, String> requestArgs) {
+    public ResponseEntity<? extends IResponse> n1qlQuery(@RequestBody Map<String, Object> requestArgs) {
         try {
-            String query = requestArgs.get("query");
-            Result<List<Map<String, Object>>> result = this.service.n1qlQuery(query);
+            String query = requestArgs.get("query").toString();
+            String strPrepared = requestArgs.get("usePrepared").toString();
+            Boolean prepared = tryParseBoolean(strPrepared) ? Boolean.parseBoolean(strPrepared) : false;
+            String params = requestArgs.get("queryParams").toString();
+            //flip the prepared value as from UI - false = don't use prepared statements
+            Result<List<Map<String, Object>>> result = this.service.n1qlQuery(query, !prepared, params);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
@@ -116,7 +120,8 @@ public class SdkController {
     public ResponseEntity<? extends IResponse> touch(@RequestBody Map<String, String> requestArgs){
         try {
             String docId = requestArgs.get("docId");
-            Integer expiry = Integer.parseInt(requestArgs.get("expiry"));
+            String strExpiry = requestArgs.get("expiry");
+            Integer expiry = tryParseInt(strExpiry) ? Integer.parseInt(strExpiry) : 0;
             Result<Boolean> result = this.service.touch(docId, expiry);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
@@ -128,7 +133,8 @@ public class SdkController {
     public ResponseEntity<? extends IResponse> getAndTouch(@RequestBody Map<String, String> requestArgs){
         try {
             String docId = requestArgs.get("docId");
-            Integer expiry = Integer.parseInt(requestArgs.get("expiry"));
+            String strExpiry = requestArgs.get("expiry");
+            Integer expiry = tryParseInt(strExpiry) ? Integer.parseInt(strExpiry) : 0;
             Result<Map<String, Object>> result = this.service.getAndTouch(docId, expiry);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
@@ -197,12 +203,12 @@ public class SdkController {
     }
 
     @RequestMapping(value="/mutateIn", method = RequestMethod.POST)
-    public ResponseEntity<? extends IResponse> mutateIn(@RequestBody Map<String, String> requestArgs){
+    public ResponseEntity<? extends IResponse> mutateIn(@RequestBody Map<String, Object> requestArgs){
         try {
-            String docId = requestArgs.get("docId");
-            String path = requestArgs.get("path");
-            String value = requestArgs.get("value");
-            String resultType = requestArgs.get("resultType");
+            String docId = requestArgs.get("docId").toString();
+            String path = requestArgs.get("path").toString();
+            Object value = requestArgs.get("value");
+            String resultType = requestArgs.get("resultType").toString();
             Result<Map<String, Object>> result = this.service.mutateIn(docId, path, value, resultType);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
@@ -214,9 +220,10 @@ public class SdkController {
     public ResponseEntity<? extends IResponse> fts(@RequestBody Map<String, String> requestArgs){
         try {
             String term = requestArgs.get("term");
-            String index = new String();
-            Integer fuzzy = Integer.parseInt(requestArgs.get("fuzziness"));
-            Result<List<Map<String, List<String>>>> result = this.service.fts(term, index, fuzzy);
+            String index = requestArgs.get("index");
+            String strFuzzy = requestArgs.get("fuzziness");
+            Integer fuzzy = tryParseInt(strFuzzy) ? Integer.parseInt(strFuzzy) : 0;
+            Result<List<Map<String, Object>>> result = this.service.fts(term, index, fuzzy);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             System.out.println(e.getStackTrace());
@@ -250,6 +257,25 @@ public class SdkController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
+        }
+    }
+
+    public Boolean tryParseInt(String val){
+        try{
+            Integer.parseInt(val);
+            return true;
+        }
+        catch (NumberFormatException ex){
+            return false;
+        }
+    }
+
+    public Boolean tryParseBoolean(String val){
+        try{
+            return Boolean.parseBoolean(val);
+        }
+        catch (NumberFormatException ex){
+            return false;
         }
     }
 

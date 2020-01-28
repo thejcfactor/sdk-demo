@@ -6,6 +6,7 @@ import com.couchbase.client.java.Collection;
 import com.couchbase.client.java.ReactiveCollection;
 import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.json.JsonArray;
+import com.couchbase.client.java.query.QueryOptions;
 import com.couchbase.client.java.query.QueryResult;
 import com.couchbase.client.java.kv.GetResult;
 //import com.couchbase.client.java.kv.LookupInSpec;
@@ -139,9 +140,15 @@ public final class SdkDemoRepository {
         return this.bucket.name();
     }
 
-    public List<Map<String, Object>> n1qlQuery(String query) {
+    public List<Map<String, Object>> n1qlQuery(String query, Boolean prepared, JsonArray parameters) {
 
-        QueryResult result = this.cluster.query(query);
+        QueryOptions opts = QueryOptions.queryOptions().adhoc(prepared);
+
+        if(!parameters.isEmpty()){
+            opts.parameters(parameters);
+        }
+
+        QueryResult result = this.cluster.query(query, opts);
 
         List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
         for (JsonObject row : result.rowsAsObject()) {
@@ -266,40 +273,59 @@ public final class SdkDemoRepository {
         }
     }
 
-    public Map<String, Object> mutateIn(String docId, String path, String value, String resultType){
+    public Map<String, Object> mutateIn(String docId, String path, Object value, String resultType){
         Boolean valueIsInt = false;
         try{
-            Integer.parseInt(value);
+            Integer.parseInt(value.toString());
             valueIsInt = true;
         }
         catch(NumberFormatException e){
             valueIsInt = false;
         }
 
+        Boolean valueIsFloat = false;
+        if(!valueIsInt){
+            try{
+                Float.parseFloat(value.toString());
+                valueIsFloat = true;
+            }
+            catch(NumberFormatException e){
+                valueIsFloat = false;
+            }
+        }
+
         if(valueIsInt){
-            Integer intValue = Integer.parseInt(value);
+            Integer intValue = Integer.parseInt(value.toString());
             collection.mutateIn(docId, Collections.singletonList(MutateInSpec.upsert(path, intValue)));
+        }
+        else if(valueIsFloat){
+            Float floatValue = Float.parseFloat(value.toString());
+            collection.mutateIn(docId, Collections.singletonList(MutateInSpec.upsert(path, floatValue)));
         }
         else{
             collection.mutateIn(docId, Collections.singletonList(MutateInSpec.upsert(path, value)));
         }
+        //collection.mutateIn(docId, Collections.singletonList(MutateInSpec.upsert(path, value)));
 
         return lookupIn(docId, path, resultType);
     }
 
-    public List<Map<String, List<String>>> fts(String searchTerm, String indexName, Integer fuzzyLevel) {
+    public List<Map<String, Object>> fts(String searchTerm, String indexName, Integer fuzzyLevel) {
         if (indexName.isEmpty()) {
-            indexName = "beer-search";
+            indexName = "default";
         }
 
-        // MatchQuery query = SearchQuery.match(searchTerm).fuzziness(fuzzyLevel);
-        // SearchQuery query = SearchQuery.match(searchTerm);
-        SearchResult result = this.cluster.searchQuery(indexName, SearchQuery.queryString(searchTerm),
+        SearchResult result = cluster.searchQuery(indexName, SearchQuery.queryString(searchTerm),
                 SearchOptions.searchOptions().limit(10).highlight());
 
-        List<Map<String, List<String>>> data = new ArrayList<Map<String, List<String>>>();
+        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
         for (SearchRow row : result.rows()) {
-            data.add(row.fragments());
+            data.add(new HashMap<String, Object>() {
+                {
+                    put("id", row.id());
+                    put("hits", row.fragments());
+                }
+            });
         }
 
         return data;

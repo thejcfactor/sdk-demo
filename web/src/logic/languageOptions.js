@@ -30,21 +30,15 @@ export default {
     }
     return null;
   },
-  getSampleCode(language) {
-    if (language.includes("JAVA")) {
-      return java.getSampleCode(language);
-    }
-    if (language.includes("NODE")) {
-      return nodeJS.getSampleCode(language);
-    }
-    if (language.includes("PYTHON")) {
-      return python.getSampleCode(language);
-    }
-    return null;
-  },
   getCodeSnippet(language, commands) {
     if (language.includes("JAVA")) {
       return java.getCodeSnippet(language, commands);
+    }
+    if (language.includes("NODE")) {
+      return nodeJS.getCodeSnippet(language, commands);
+    }
+    if (language.includes("PYTHON")) {
+      return python.getCodeSnippet(language, commands);
     }
     return null;
   }

@@ -45,8 +45,12 @@ export default {
   },
   getN1qlCommandPayload(inputOptions) {
     let queryInput = _.findWhere(inputOptions, { Name: "query" });
+    let usePrepared = _.findWhere(inputOptions, { Name: "usePrepared" });
+    let queryParams = _.findWhere(inputOptions, { Name: "queryParams" });
     return {
-      query: queryInput.Value
+      query: queryInput.Value,
+      usePrepared: usePrepared.Value,
+      queryParams: queryParams.Value
     };
   },
   getGetCommandPayload(inputOptions) {
@@ -143,11 +147,12 @@ export default {
   },
   getFTSCommandPayload(inputOptions) {
     let ftsMatch = _.findWhere(inputOptions, { Name: "searchTerm" });
-    //let index = _.findWhere(inputOptions, { Name: "index" });
+    let index = _.findWhere(inputOptions, { Name: "index" });
     let fuzziness = _.findWhere(inputOptions, { Name: "fuzziness" });
     return {
       term: ftsMatch.Value,
-      fuzziness: fuzziness.Value
+      fuzziness: fuzziness.Value,
+      index: index.Value
     };
   },
   getACIDCommandPayload(inputOptions) {

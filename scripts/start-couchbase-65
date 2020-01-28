@@ -4,8 +4,8 @@ SCRIPTS_DIR="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 WORKING_DIR="$(dirname "$SCRIPTS_DIR")"
 DB_CONTEXT=$WORKING_DIR/couchbase-65/
 
-DB_BUILD_NAME=couchbase-6.5b
-DB_CONTAINER_NAME=cb-6.5b
+DB_BUILD_NAME=couchbase-6.5
+DB_CONTAINER_NAME=cb-6.5
 
 DOCKER_CMD=docker
 
@@ -19,9 +19,9 @@ echo "Building Couchmovies Couchbase container..."
 
 $DOCKER_CMD build -t $DB_BUILD_NAME -f $DB_CONTEXT/Dockerfile.dev $DB_CONTEXT
 
-echo "Couchbase 6.5 BETA container built..."
+echo "Couchbase 6.5 container built..."
 
-echo "Starting Couchbase 6.5 BETA container..."
+echo "Starting Couchbase 6.5 container..."
 
 $DOCKER_CMD run --rm --name $DB_CONTAINER_NAME -d -p 8091-8094:8091-8094 -p 11210-11211:11210-11211 $DB_BUILD_NAME
 

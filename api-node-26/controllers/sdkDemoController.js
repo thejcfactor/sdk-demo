@@ -2,6 +2,18 @@ const SdkService = require("../services/sdkDemoService");
 
 let service = new SdkService();
 
+let tryParseInt = function(val, defaultValue){
+  var retValue = defaultValue;
+  if(val !== null) {
+      if(val.length > 0) {
+          if (!isNaN(val)) {
+              retValue = parseInt(val);
+          }
+      }
+  }
+  return retValue;
+};
+
 const SdkDemoController = {
   ping(req, res) {
     return res.status(200).send("pong!");
@@ -45,15 +57,14 @@ const SdkDemoController = {
       });
     } else {
       let query = req.body.query;
-      console.log(query);
-      service.n1qlQuery(query, function(err, result) {
+      let prepare = req.body.usePrepared;
+      let params = req.body.queryParams;
+      service.n1qlQuery(query, prepare, params, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute N1QL query.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute N1QL query.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -70,12 +81,10 @@ const SdkDemoController = {
       let docId = req.body.docId;
       service.get(docId, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute get KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute get KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -92,12 +101,10 @@ const SdkDemoController = {
       let docIds = req.body.docIds;
       service.getMulti(docIds, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute getMulti KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute getMulti KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -114,12 +121,10 @@ const SdkDemoController = {
       let docId = req.body.docId;
       service.getReplica(docId, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute getReplica KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute getReplica KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -137,19 +142,17 @@ const SdkDemoController = {
       let expiry = JSON.parse(req.body.expiry);
       service.touch(docId, expiry, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute touch KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute touch KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
       });
     }
   },
-  
+
   getAndTouch(req, res) {
     if (!req.body.docId || !req.body.expiry) {
       return res.status(500).send({
@@ -160,19 +163,17 @@ const SdkDemoController = {
       let expiry = JSON.parse(req.body.expiry);
       service.getAndTouch(docId, expiry, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute getAndTouch KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute getAndTouch KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
       });
     }
   },
-  
+
   upsert(req, res) {
     if (!req.body.docId || !req.body.doc) {
       res.status(500).send({ message: "No document Id or document provided." });
@@ -180,20 +181,18 @@ const SdkDemoController = {
       let docId = req.body.docId;
       let docValue = req.body.doc;
       let options = {};
-      if (req.body.persistTo){
+      if (req.body.persistTo) {
         options.persist_to = req.body.persistTo;
       }
-      if (req.body.replicateTo){
+      if (req.body.replicateTo) {
         options.persist_to = req.body.replicateTo;
       }
       service.upsert(docId, docValue, options, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute upsert KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute upsert KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -208,20 +207,18 @@ const SdkDemoController = {
       let docId = req.body.docId;
       let docValue = req.body.doc;
       let options = {};
-      if (req.body.persistTo){
+      if (req.body.persistTo) {
         options.persist_to = req.body.persistTo;
       }
-      if (req.body.replicateTo){
+      if (req.body.replicateTo) {
         options.persist_to = req.body.replicateTo;
       }
       service.insert(docId, docValue, options, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute insert KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute insert KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -236,20 +233,18 @@ const SdkDemoController = {
       let docId = req.body.docId;
       let docValue = req.body.doc;
       let options = {};
-      if (req.body.persistTo){
+      if (req.body.persistTo) {
         options.persist_to = req.body.persistTo;
       }
-      if (req.body.replicateTo){
+      if (req.body.replicateTo) {
         options.persist_to = req.body.replicateTo;
       }
       service.replace(docId, docValue, options, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute replace KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute replace KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -264,12 +259,10 @@ const SdkDemoController = {
       let docId = req.body.docId;
       service.remove(docId, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute remove KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute remove KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -277,20 +270,20 @@ const SdkDemoController = {
     }
   },
 
-  lookupIn(req, res){
-    if(!req.body.docId || !req.body.path){
-      res.status(500).send({ message: "No document Id or sub-document path provided." });
-    }else{
+  lookupIn(req, res) {
+    if (!req.body.docId || !req.body.path) {
+      res
+        .status(500)
+        .send({ message: "No document Id or sub-document path provided." });
+    } else {
       let docId = req.body.docId;
       let path = req.body.path;
       service.lookupIn(docId, path, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute lookupIn KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute lookupIn KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -298,21 +291,21 @@ const SdkDemoController = {
     }
   },
 
-  mutateIn(req, res){
-    if(!req.body.docId || !req.body.path){
-      res.status(500).send({ message: "No document Id or sub-document path provided." });
-    }else{
+  mutateIn(req, res) {
+    if (!req.body.docId || !req.body.path) {
+      res
+        .status(500)
+        .send({ message: "No document Id or sub-document path provided." });
+    } else {
       let docId = req.body.docId;
       let path = req.body.path;
       let value = req.body.value;
       service.mutateIn(docId, path, value, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message: "Error trying to execute mutateIn KV command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute mutateIn KV command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }
@@ -320,22 +313,20 @@ const SdkDemoController = {
     }
   },
 
-  fts(req, res){
-    if(!req.body.term){
+  fts(req, res) {
+    if (!req.body.term) {
       res.status(500).send({ message: "No search term provided." });
-    }else{
+    } else {
       let term = req.body.term;
-      //TODO:
-      //let index = req.body.index;
-      let fuzzy = JSON.parse(req.body.fuzziness);
-      service.fts(term, null, fuzzy, function(err, result) {
+      let index = req.body.index;
+      let fuzzy = tryParseInt(req.body.fuzziness, null);
+
+      service.fts(term, index, fuzzy, function(err, result) {
         if (err) {
-          return res
-            .status(500)
-            .send({
-              message:"Error trying to execute fts command.",
-              error: err.message
-            });
+          return res.status(500).send({
+            message: "Error trying to execute fts command.",
+            error: err.message
+          });
         } else {
           return res.status(200).send(result);
         }

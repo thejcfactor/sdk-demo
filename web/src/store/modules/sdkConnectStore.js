@@ -121,7 +121,7 @@ export const actions = {
       });
   },
   addLanguageSpecificCommands({ commit }, { language, bucket }) {
-    if (language == "JAVA30b") {
+    if (language == "JAVA30") {
       let sampleCommands = languageOptions.getLanguageSpecificCommands(
         language
       );
@@ -131,7 +131,7 @@ export const actions = {
         });
       }
     }
-    if (language == "JAVA30b" && bucket == "beer-sample") {
+    if (language == "JAVA30" && bucket == "beer-sample") {
       let sampleCommand = bucketOptions.getSampleCommand(
         bucket,
         "acid-beer-sample"

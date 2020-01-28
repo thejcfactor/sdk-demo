@@ -8,6 +8,7 @@ import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
 import com.couchbase.client.core.message.kv.subdoc.multi.Mutation;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.query.N1qlQuery;
+import com.couchbase.client.java.query.N1qlParams;
 import com.couchbase.client.java.query.N1qlQueryResult;
 import com.couchbase.client.java.query.N1qlQueryRow;
 import com.couchbase.client.java.subdoc.DocumentFragment;
@@ -105,9 +106,17 @@ public final class SdkDemoRepository {
         return this.bucket.name();
     }
 
-    public List<Map<String, Object>> n1qlQuery(String query) {
+    public List<Map<String, Object>> n1qlQuery(String query, Boolean prepare, JsonArray parameters) {
 
-        N1qlQueryResult result = this.bucket.query(N1qlQuery.simple(query));
+        N1qlParams params = N1qlParams.build().adhoc(prepare);
+        N1qlQueryResult result = null;
+
+        if(!parameters.isEmpty()){
+            result = this.bucket.query(N1qlQuery.parameterized(query, parameters, params));
+        }
+        else{
+            result = this.bucket.query(N1qlQuery.simple(query, params));
+        }
 
         if (!result.finalSuccess()) {
             throw new DataRetrievalFailureException("Query error: " + result.errors());
@@ -248,49 +257,35 @@ public final class SdkDemoRepository {
         }
     }
 
-    public Map<String, Object> mutateIn(String docId, String path, String value, String resultType){
+    public Map<String, Object> mutateIn(String docId, String path, String value, String resultType) {
         DocumentFragment<Mutation> result = bucket.mutateIn(docId).upsert(path, value).execute();
 
-        if(resultType.equalsIgnoreCase("primitive")){
-            Object obj = result.content(0);
-            return new HashMap<String, Object>(){{
-                put(path, obj);
-            }};
-        }
-        else if(resultType.equalsIgnoreCase("object")){
-            JsonObject obj = result.content(0, JsonObject.class);
-            return new HashMap<String, Object>(){{
-                put(path, obj.toMap());
-            }};
-        }else{
-            //TODO: array
-            JsonArray array = result.content(0, JsonArray.class);
-
-            return new HashMap<String, Object>(){{
-                put(path, array);
-            }};
+        if (result.exists(path)) {
+            return lookupIn(docId, path, resultType);
         }
 
+        return new HashMap<String, Object>() {
+        };
     }
 
-    public  List<Map<String, Object>> fts(String searchTerm, String indexName, Integer fuzzyLevel){
-        if(indexName.isEmpty()){
-            indexName = "beer-search";
+    public List<Map<String, Object>> fts(String searchTerm, String indexName, Integer fuzzyLevel) {
+        if (indexName.isEmpty()) {
+            indexName = "default";
         }
 
         MatchQuery query = SearchQuery.match(searchTerm).fuzziness(fuzzyLevel);
 
-        SearchQueryResult result = bucket.query(new SearchQuery(indexName, query)
-            .limit(10)
-            .highlight());
+        SearchQueryResult result = bucket.query(new SearchQuery(indexName, query).limit(10).highlight());
 
         List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
         for (SearchQueryRow row : result.hits()) {
-            
-            data.add(new HashMap<String, Object>(){{
-                put("id", row.id());
-                put("hits", row.fragments());
-            }});
+
+            data.add(new HashMap<String, Object>() {
+                {
+                    put("id", row.id());
+                    put("hits", row.fragments());
+                }
+            });
         }
 
         return data;

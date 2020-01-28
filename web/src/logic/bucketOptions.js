@@ -30,13 +30,34 @@ const buckets = [
       {
         Name: "basicQuery",
         Label: "Basic Example",
-        Query: "SELECT * FROM `beer-sample` LIMIT 5"
+        Query: "SELECT * FROM `beer-sample` LIMIT 5",
+        CanParameterize: true,
+        ParameterizedQuery: "SELECT * FROM `beer-sample` LIMIT $1",
+        QueryParameters: [
+          {
+            Name: "$1",
+            Value: 5
+          }
+        ]
       },
       {
         Name: "orderByQuery",
         Label: "ORDER BY",
         Query:
-          "SELECT name FROM `beer-sample` WHERE `type` = 'brewery' ORDER BY name"
+          "SELECT name FROM `beer-sample` WHERE `type` = 'brewery' ORDER BY name",
+        CanParameterize: true,
+        ParameterizedQuery:
+          "SELECT name FROM `beer-sample` WHERE `type` = $1 ORDER BY $2",
+        QueryParameters: [
+          {
+            Name: "$1",
+            Value: "brewery"
+          },
+          {
+            Name: "$2",
+            Value: "name"
+          }
+        ]
       },
       {
         Name: "groupByQuery",
@@ -44,7 +65,9 @@ const buckets = [
         Query:
           "SELECT `type`, COUNT(1) AS DocCount" +
           "\nFROM `beer-sample`" +
-          "\nGROUP BY `type`"
+          "\nGROUP BY `type`",
+        CanParameterize: false,
+        ParameterizedQuery: null
       },
       {
         Name: "joinQuery",
@@ -56,7 +79,9 @@ const buckets = [
           "\n(SELECT brewery_id, COUNT(1) AS beerCount" +
           "\nFROM `beer-sample`" +
           "\nWHERE `type` = 'beer'" +
-          "\nGROUP BY brewery_id) AS beer ON beer.brewery_id = meta(brewery).id"
+          "\nGROUP BY brewery_id) AS beer ON beer.brewery_id = meta(brewery).id",
+        CanParameterize: false,
+        ParameterizedQuery: null
       }
     ],
     SampleDocId: "21st_amendment_brewery_cafe-test-beer",
@@ -134,11 +159,12 @@ export default {
     });
 
     return sampleQueries.concat(bucketQueries);
+    //return matchingBucket.Queries;
   },
   getSampleQuery(bucket, name) {
     let matchingBucket = _.findWhere(buckets, { Bucket: bucket });
     let query = _.findWhere(matchingBucket.Queries, { Name: name });
-    return query.Query;
+    return query;
   },
   getSampleDocId(bucket) {
     let matchingBucket = _.findWhere(buckets, { Bucket: bucket });
